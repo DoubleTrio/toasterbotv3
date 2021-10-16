@@ -1,7 +1,11 @@
 import { stripIndents } from 'common-tags';
 import { APIMessage } from 'discord-api-types';
 import {
-  ButtonInteraction, Collection, CommandInteraction, EmbedFieldData, GuildMember, InteractionCollectorOptions, Message, MessageActionRowOptions, MessageButtonOptions, MessageEmbedOptions,
+  ButtonInteraction,
+  Collection, 
+  CommandInteraction, 
+  EmbedFieldData, GuildMember, 
+  InteractionCollectorOptions, Message, MessageActionRowOptions, MessageButtonOptions, MessageEmbedOptions,
 } from 'discord.js';
 import i18n from 'i18next';
 import { Game, ToasterBot, UserOption } from '../../structures';

@@ -112,12 +112,17 @@ class PaginatedEmbed<T> {
   }
 
   private footer() : MessageEmbedFooter {
+    const timeLimitText = i18n.t('timeLimitText', {
+      timeLimit: this.buttonCollectorOptions.time / 1000,
+    });
+
+    const requestedByText = i18n.t('requestedByText', {
+      user: this.interaction.user,
+    });
+
     return {
       iconURL: this.interaction.user.avatarURL(),
-      text: i18n.t('PAGINATED_EMBED_FOOTER', {
-        user: this.interaction.user,
-        timeLimit: this.buttonCollectorOptions.time / 1000,
-      }),
+      text: `${timeLimitText} | ${requestedByText}`,
     };
   }
 

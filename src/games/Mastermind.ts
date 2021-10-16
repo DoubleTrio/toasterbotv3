@@ -134,6 +134,7 @@ class Mastermind extends Game {
       fields,
       footer: {
         text: timeLimitText,
+        iconURL: this.interaction.user.avatarURL(),
       },
       timestamp: Date.now(),
     });

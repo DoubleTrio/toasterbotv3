@@ -1,18 +1,65 @@
 import { stripIndent } from 'common-tags';
 
 export default {
+  blackjack: {
+    name: 'Blackjack',
+    description: 'Cure your gambling addiction in a classic game of blackjack',
+    extendedDescription: stripIndent`
+      Play the classic game of $t(blackjack.name)! First place bets, then get closer to 21 than the dealer!
+
+      **Betting**
+      -In the betting phase, type in an integer amount that you want to bet (eg: 100, 30, 7)
+      -The bet must be a minimum of $5 
+      -The bet must not exceed your total amount of money
+
+      **Playing**
+      -Click on one of the following buttons below to choose your action. 
+      -\`Hit\` - Adds a random card from the deck into your hand
+      -\`Stand\` - Ends your turn and the dealers play
+      -\`Double Down\` - Double your initial bet (if possible) and add **only** one card into your hand
+      -\`End Game\` - Ends the current game of $t(blackjack.name)
+      
+      **Ending**
+      -The game ends once all rounds are finished or the player can no longer bet
+
+      **Other**
+      -The dealer always stays at 16
+    `,
+    betTooLow: 'Your bet is too **low**, try again **(>= {{min}})**',
+    betTooHigh: 'Your bet is too **high**, try again **(<= {{max}})**',
+    btnEndGame: 'End Game',
+    btnHit: 'Hit', 
+    btnStand: 'Stand',
+    btnDoubleDown: 'Double Down',
+    canNoLongerBet: 'You can longer bet... You walk away with $t(blackjack.money, { "amount": {{amount}} })',
+    dealerHand: 'Dealer Hand',
+    money: '**${{amount}}**',
+    onDealerBlackjackWin: 'Ouch, although you and the dealer tied, you **lost** because they had a **$t(blackjack.name)**',
+    onDealerBust: '**You won!** The dealer busted!',
+    onDealerWin: 'Ouch, the dealer had a better hand than you', 
+    onPlayerWin: '**Nicely done!** You won against the dealer this round!',
+    onPlayerBlackjackWin: 'Although you and the dealer tied, you **won** because you had a **$t(blackjack.name)**',
+    onDraw: 'You and the dealer **tied!**',
+    onEndGame: 'You have quitted **$t(blackjack.name)**!',
+    onPlayerHitBust: 'Ouch, you have busted...',
+    placeBets: 'Type in how much you want to bet! You have $t(blackjack.money, { "amount": {{amount}} }) left!',
+    playerHand: 'Player Hand',
+    totalMoney: 'Total Money',
+    winMessage: 'Congrats! You won $t(blackjack.money, { "amount": {{amount}} })!',
+    yourBet: 'Your Bet',
+  },
   connect4: {
     name: 'Connect4',
     description: 'Challenge someone in the classic game of Connect4',
     extendedDescription: stripIndent`
-		Take turns dropping tokens between you and your opponent and "connect" 4 in the row vertically, horizontally, or diagonally to win!
-				
-		**Dropping Tiles**
-		-Reactions will appear below the Connect4 embed, representing the column your token will be dropped into
-		-Click on one of the reactions to drop your tile into the column
-		
-		**Ending**
-		-The game will end when you or the opponent "connects" 4 in a row or when all the columns are filled
+      Take turns dropping tokens between you and your opponent and "connect" 4 in the row vertically, horizontally, or diagonally to win!
+          
+      **Dropping Tiles**
+      -Reactions will appear below the Connect4 embed, representing the column your token will be dropped into
+      -Click on one of the reactions to drop your tile into the column
+      
+      **Ending**
+      -The game will end when you or the opponent "connects" 4 in a row or when all the columns are filled
 		`,
 
     turnMessage: '{{token}} It\'s your turn, **{{player.nickname}}**',
@@ -181,26 +228,26 @@ export default {
     choiceSpockWinRock: 'vaporizes',
     choiceSpockWinScissors: 'smashes',
     drawMessage: 'It\'s a draw!',
-    playerWinMessage: '{{player.nickname}} has masterfully won $t(rps.name)!',
-    playerWinRoundMessage: '**{{player.nickname}}\'s** {{playerChoice}} {{action}} **{{other.nickame}}** {{otherChoice}}',
+    playerWinMessage: '**{{player.nickname}}** has masterfully won **$t(rps.name)**!',
+    playerWinRoundMessage: '**{{player.nickname}}\'s** {{playerChoice}} {{action}} **{{other.nickname}}** {{otherChoice}}',
   },
   scrabble: {
     name: 'Scrabble',
     description: 'Given a set of random letters, find the greatest scoring word!',
     extendedDescription: stripIndent`
-		Play a modified version of Scrabble. Each round, there will be 30 seconds for players to create the highest scoring word.
-		
-		**Scoring**
-		-Each valid word is scored like so: (sum of each letter value in Scrabble * length of word). 
-		-If all letters are used, then an additional 50 points is added! Letter values are displayed below! Additionally, blank tiles (🟨) are worth 0 points but can be used to fill any letters!
-		-A: 1, B: 3, C: 3, D: 2, E: 1, F: 4, G: 2
-		-H: 4, I: 1, J: 8, K: 5, L: 1, M: 3, N: 1
-		-O: 1, P: 3, Q: 10, R: 1, S: 1, T: 1, U: 1
-		-V: 4, W: 4, X: 8, Y: 4, Z: 10, 🟨: 0,
-	
-		**Ending**
-		-The game ends once all rounds are completed
-		-If the game played on multiplayer mode, then the highest scoring player wins!
+      Play a modified version of Scrabble. Each round, there will be 30 seconds for players to create the highest scoring word.
+      
+      **Scoring**
+      -Each valid word is scored like so: (sum of each letter value in Scrabble * length of word). 
+      -If all letters are used, then an additional 50 points is added! Letter values are displayed below! Additionally, blank tiles (🟨) are worth 0 points but can be used to fill any letters!
+      -A: 1, B: 3, C: 3, D: 2, E: 1, F: 4, G: 2
+      -H: 4, I: 1, J: 8, K: 5, L: 1, M: 3, N: 1
+      -O: 1, P: 3, Q: 10, R: 1, S: 1, T: 1, U: 1
+      -V: 4, W: 4, X: 8, Y: 4, Z: 10, 🟨: 0,
+    
+      **Ending**
+      -The game ends once all rounds are completed
+      -If the game played on multiplayer mode, then the highest scoring player wins!
 		`,
     endSummaryTitle: 'All Rounds Summary + Highest Word',
     endRoundText: 'Round {{round}} -> {{word}} (+{{score}})',
@@ -243,21 +290,20 @@ export default {
     name: 'Yahtzee',
     description: 'Roll 5 dice and obtain a variety of number combinations to earn points!',
     extendedDescription: stripIndent`
-		**Rerolling**
-		-To select which dice you want to keep, select the reactions numbered 1-5. The reactions taht are **not** selected will be rerolled.
-		-If you want to stop rerolling and immediately start selecting a category, click on the "**Play**" button
-		-Otherwise, if you want to reroll, click on the "**Reroll**" button.
-		-You have two rerolls
+      **Rerolling**
+      -To select which dice you want to keep, select the reactions numbered 1-5. The reactions taht are **not** selected will be rerolled.
+      -If you want to stop rerolling and immediately start selecting a category, click on the "**Play**" button
+      -Otherwise, if you want to reroll, click on the "**Reroll**" button.
+      -You have two rerolls
 
-		**Selecting a Category**
-		-Select which category in the dropdown menu to select where you rolls will go towards.
+      **Selecting a Category**
+      -Select which category in the dropdown menu to select where you rolls will go towards.
 
-		**Scoring**
-		-Your score is calculated through the sum of all the categories you earned.
-		-You can a bonus (+35) bonus if categories 1-6 add up to 63 or more.
-		-You can view how much points each category can give and their combination requirements below!
+      **Scoring**
+      -Your score is calculated through the sum of all the categories you earned.
+      -You can a bonus (+35) bonus if categories 1-6 add up to 63 or more.
+      -You can view how much points each category can give and their combination requirements below!
 	`,
-
     categoryId: 'Category #{{id}}',
     categoryPlaceholder: 'Select a category',
     categoryChance: 'Chance',

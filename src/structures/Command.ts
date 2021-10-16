@@ -1,7 +1,6 @@
 import {
   CommandInteraction, PermissionString, ApplicationCommandOption,
 } from 'discord.js';
-import i18n, { TFunction } from 'i18next';
 import ToasterBot from './ToasterBot';
 
 interface CommandOptions {
@@ -54,8 +53,6 @@ abstract class Command {
   readonly botPermissions: Array<PermissionString>;
 
   readonly memberPermissions: Array<PermissionString>;
-
-  public t : TFunction = i18n.t;
 
   constructor(client: ToasterBot, info: CommandInfo, options: CommandOptions) {
     this.client = client;

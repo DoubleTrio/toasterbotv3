@@ -3,7 +3,7 @@ import { ToasterBot } from '..';
 
 class EventHandler {
   public loadEvents(client: ToasterBot) : void {
-    const eventFiles = fs.readdirSync('./dist/src/events').filter((file) => file.endsWith('.js'));
+    const eventFiles = fs.readdirSync('./dist/events').filter((file) => file.endsWith('.js'));
     eventFiles.forEach(async (file) => {
       const eventFile = await import(`../../events/${file}`);
       const event = new eventFile.default();

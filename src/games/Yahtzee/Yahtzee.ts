@@ -258,6 +258,7 @@ class Yahtzee extends Game {
       title,
       fields,
       footer: {
+        iconURL: this.interaction.user.avatarURL(),
         text: i18n.t('timeLimitText', {
           timeLimit: this.timeLimit / 1000,
         }),

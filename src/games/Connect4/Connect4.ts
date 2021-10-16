@@ -52,15 +52,12 @@ class Connect4 extends Game {
 
   private turn = 1;
 
-  private width: number;
-
   constructor(client: ToasterBot, interaction: CommandInteraction) {
     super(client, interaction, { timeLimit: 60000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
-    await this.initialize();
-
+    this.challenger = this.getUserValue('challenger');
     if (this.challenger.user.bot) {
       return this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
     }
@@ -69,6 +66,7 @@ class Connect4 extends Game {
       return this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
     }
 
+    await this.initialize();
     if (this.isChallengeAccepted) {
       addReactions(this.message, this.reactions);
       const firstPlayer = this.playerData.get(1);
@@ -97,9 +95,8 @@ class Connect4 extends Game {
   }
 
   protected async initialize() : Promise<void> {
-    const width = this.getOptionValue<number>('width');
-    const height = this.getOptionValue<number>('height');
-    this.challenger = this.getUserValue('challenger');
+    const width = this.getOptionValue<number>('width') || 7;
+    const height = this.getOptionValue<number>('height') || 6;
     this.board = Game.generateBoard<number>({
       width,
       height,
@@ -120,7 +117,7 @@ class Connect4 extends Game {
         title,
       },
     ).awaitResponse(this.challenger.user.id);
-    this.reactions = CONNECT4_REACTIONS.slice(0, this.width);
+    this.reactions = CONNECT4_REACTIONS.slice(0, width);
     this.message = await this.interaction.fetchReply() as Message;
   }
 

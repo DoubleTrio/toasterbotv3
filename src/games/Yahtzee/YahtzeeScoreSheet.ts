@@ -107,7 +107,7 @@ class YahtzeeScoreSheet {
       },
     }),
     10: new YahtzeeCategory({
-      name: i18n.t('yahtzee.categoryFourOfAKind'),
+      name: i18n.t('yahtzee.categorySmallStraight'),
       rollEval: (distribution: Distribution) => (countStraightLength(distribution) >= 4 ? 30 : 0),
     }),
     11: new YahtzeeCategory({

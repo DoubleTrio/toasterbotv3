@@ -147,6 +147,7 @@ class Scrabble extends Game {
         text: i18n.t('timeLimitText', {
           timeLimit: this.timeLimit / 1000,
         }),
+        iconURL: this.interaction.user.avatarURL(),
       },
       timestamp: Date.now(),
     };

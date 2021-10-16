@@ -29,7 +29,7 @@ class RPS extends Game {
   private playerData = new Collection<string, RPSPlayer>();
 
   constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction);
+    super(client, interaction, { timeLimit: 30 * 1000 });
   }
 
   protected async initialize() : Promise<void> {
@@ -154,12 +154,12 @@ class RPS extends Game {
     });
 
     const requiredWinsText = i18n.t('game.firstToWins', {
-      requiredWins: this.requiredWins,
+      wins: this.requiredWins,
     });
 
     const embed : MessageEmbedOptions = {
       color: this.client.colors.primary,
-      title: i18n.t('game.score'),
+      title: i18n.t('game.scores'),
       fields,
       footer: {
         text: `${requiredWinsText} | ${timeLimitText}`,

@@ -205,8 +205,10 @@ class Minesweeper extends Game {
       footer: {
         text: i18n.t('timeLimitText', {
           timeLimit: this.timeLimit / 1000,
+          iconURL: this.interaction.user.avatarURL(),
         }),
       },
+      
       timestamp: Date.now(),
     };
 
@@ -227,6 +229,7 @@ class Minesweeper extends Game {
       footer: {
         text: i18n.t('timeLimitText', {
           timeLimit: this.timeLimit / 1000,
+          iconURL: this.interaction.user.avatarURL(),
         }),
       },
       timestamp: Date.now(),

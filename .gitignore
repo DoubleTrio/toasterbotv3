@@ -3,3 +3,4 @@ config.json
 *.js
 *.js.map
 .env
+/dist

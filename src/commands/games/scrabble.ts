@@ -60,7 +60,7 @@ class ScrabbleCommand extends Command {
         {
           type: 'INTEGER',
           name: 'time',
-          description: 'The amount of time each round to enter a word  (default: 20 seconds)',
+          description: 'The amount of time each round to enter a word (default: 30 seconds)',
           choices: generateIntegerChoices(11, (n) => {
             const value = (n + 2) * 5;
             return {

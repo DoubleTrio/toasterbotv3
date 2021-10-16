@@ -1,7 +1,7 @@
 {
   "name": "toasterbotv3",
   "version": "1.0.0",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "start": "npx tsc && node .",
     "debug": "npx tsc && node . debug",

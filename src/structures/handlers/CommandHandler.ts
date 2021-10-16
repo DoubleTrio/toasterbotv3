@@ -22,10 +22,10 @@ class CommandHandler {
   };
 
   public async loadCommands(client: ToasterBot) : Promise<void> {
-    const files = fs.readdirSync('./dist/src/commands');
+    const files = fs.readdirSync('./dist/commands');
     const commandFolders = files.filter((file: string) => !file.endsWith('.js'));
     for (const folder of commandFolders) {
-      const commandFolderFiles = fs.readdirSync(`./dist/src/commands/${folder}`).filter((file) => file.endsWith('.js'));
+      const commandFolderFiles = fs.readdirSync(`./dist/commands/${folder}`).filter((file) => file.endsWith('.js'));
       for (const file of commandFolderFiles) {
         const filePath = `../../commands/${folder}/${file}`;
         delete require.cache[require.resolve(filePath)];
