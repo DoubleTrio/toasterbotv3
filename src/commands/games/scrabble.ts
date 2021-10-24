@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import Scrabble from '../../games/Scrabble/Scrabble';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -14,6 +14,7 @@ class ScrabbleCommand extends Command {
     super(client, info, {
       name: 'scrabble',
       enabled: true,
+      cooldown: 10 * 1000,
       options: [
         {
           type: 'STRING',
@@ -87,7 +88,11 @@ class ScrabbleCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const scrabble = new Scrabble(this.client, interaction);
-    return scrabble.start();
+    const [ err ] = await to(scrabble.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

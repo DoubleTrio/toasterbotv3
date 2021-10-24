@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import Blackjack from '../../games/Blackjack/Blackjack';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -15,6 +15,7 @@ class BlackjackCommand extends Command {
       name: 'blackjack',
       aliases: ['bj', '21'],
       enabled: true,
+      cooldown: 10 * 1000,
       options: [
         {
           type: 'INTEGER',
@@ -42,8 +43,32 @@ class BlackjackCommand extends Command {
         },
         {
           type: 'INTEGER',
+          name: 'bet', 
+          description: 'The minimum bet per round (default: 5)',
+          choices: generateIntegerChoices(10, (n) => {
+            const value = 5 * (n + 1);
+            return {
+              name: value.toString(),
+              value,
+            };
+          }),
+        },
+        {
+          type: 'INTEGER',
+          name: 'stay', 
+          description: 'Dealer stays on n (default: 16)',
+          choices: generateIntegerChoices(3, (n) => {
+            const value = 15 + n;
+            return {
+              name: value.toString(),
+              value,
+            };
+          }),
+        },
+        {
+          type: 'INTEGER',
           name: 'reshuffle',
-          description: 'The deck reshuffles every n round (default: 3)',
+          description: 'The deck shuffles every n round (default: 3)',
           choices: generateIntegerChoices(3),
         },
       ],
@@ -52,7 +77,10 @@ class BlackjackCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const blackjack = new Blackjack(this.client, interaction);
-    return blackjack.start();
+    const [ err ] = await to(blackjack.start());
+    if (err) {
+      this.client.logError(this, err);
+    }
   }
 }
 

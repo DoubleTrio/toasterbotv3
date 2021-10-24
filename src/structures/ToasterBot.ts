@@ -4,6 +4,7 @@ import {
   ApplicationCommandData,
   TextChannel,
   MessageEmbedOptions,
+  Message,
 } from 'discord.js';
 import { EmbedColor } from '../types';
 import {
@@ -104,21 +105,31 @@ class ToasterBot extends Client {
 
   public capitalize = (s: string) : string => s && s[0].toUpperCase() + s.slice(1);
 
-  public createCommandErrorEmbed(command: Command, error: string, errorType = 'Error') : MessageEmbedOptions {
+  public logError(command: Command, error: Error) : Promise<Message> {
     const { name } = command;
-    return {
+    const embed = {
       color: this.colors.error,
       fields: [
         {
-          name: '**Command**',
+          name: '**In Command**',
           value: `\`${name}\``,
         },
         {
-          name: `**${errorType}**`,
-          value: `\`${error}\``,
+          name: '**Error Type**',
+          value: `\`${error.name}\``
+        },
+        {
+          name: '**Error Message**',
+          value: `\`${error.message}\``,
+        },
+        {
+          name: '**Stack**',
+          value: `\`${error.stack || '** **'}\``,
         },
       ],
     };
+
+    return this.loggingChannel.send({ embeds: [embed] });
   }
 }
 

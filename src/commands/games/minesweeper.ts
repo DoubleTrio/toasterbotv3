@@ -6,7 +6,7 @@ import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
 import Minesweeper from '../../games/Minesweeper';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 
 class MinesweeperCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
@@ -14,6 +14,7 @@ class MinesweeperCommand extends Command {
       name: 'minesweeper',
       enabled: true,
       aliases: ['ms', 'sweep'],
+      cooldown: 5 * 1000,
       options: [
         {
           name: 'width',
@@ -59,7 +60,11 @@ class MinesweeperCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const minesweeper = new Minesweeper(this.client, interaction);
-    return minesweeper.start();
+    const [ err ] = await to(minesweeper.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

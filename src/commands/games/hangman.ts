@@ -6,7 +6,7 @@ import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
 import Hangman from '../../games/Hangman';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 
 class HangmanCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
@@ -14,6 +14,7 @@ class HangmanCommand extends Command {
       name: 'hangman',
       enabled: true,
       aliases: ['hm'],
+      cooldown: 5 * 1000,
       options: [
         {
           name: 'difficulty',
@@ -80,7 +81,11 @@ class HangmanCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const hangman = new Hangman(this.client, interaction);
-    return hangman.start();
+    const [ err ] = await to(hangman.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

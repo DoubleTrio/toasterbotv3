@@ -24,6 +24,8 @@ class RPS extends Game {
 
   private intermediateTime : number;
 
+  private messageId : string;
+
   private requiredWins : number;
 
   private playerData = new Collection<string, RPSPlayer>();
@@ -50,6 +52,9 @@ class RPS extends Game {
         title,
       },
     ).awaitResponse(this.challenger.user.id);
+    
+    const message = await this.interaction.fetchReply() as Message;
+    this.messageId = message.id;
   }
 
   protected async play() : Promise<void | APIMessage | Message> {
@@ -188,7 +193,7 @@ class RPS extends Game {
   private async awaitChoices() {
     const options : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,
-      filter: (btnInteraction: ButtonInteraction) => this.playerData.has(btnInteraction.user.id),
+      filter: (btnInteraction: ButtonInteraction) => this.playerData.has(btnInteraction.user.id) && btnInteraction.message.id === this.messageId,
       componentType: 'BUTTON',
     };
 

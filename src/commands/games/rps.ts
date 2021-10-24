@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import RPS from '../../games/RPS/RPS';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -15,6 +15,7 @@ class RPSCommand extends Command {
       name: 'rps',
       aliases: ['rpsls', 'roshambo'],
       enabled: true,
+      cooldown: 10 * 1000,
       options: [
         {
           name: 'challenger',
@@ -60,7 +61,11 @@ class RPSCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const rps = new RPS(this.client, interaction);
-    return rps.start();
+    const [ err ] = await to(rps.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

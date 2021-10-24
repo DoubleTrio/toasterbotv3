@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import Mastermind from '../../games/Mastermind';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -15,6 +15,7 @@ class MastermindCommand extends Command {
       name: 'mastermind',
       aliases: ['wm'],
       enabled: true,
+      cooldown: 10 * 1000,
       options: [
         {
           name: 'difficulty',
@@ -66,7 +67,11 @@ class MastermindCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const mastermind = new Mastermind(this.client, interaction);
-    return mastermind.start();
+    const [ err ] = await to(mastermind.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

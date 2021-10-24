@@ -57,6 +57,7 @@ abstract class Game {
   protected abstract initialize(interaction: CommandInteraction) : void;
 
   public start() : Promise<Message | APIMessage | void> {
+
     return this.play();
   }
 

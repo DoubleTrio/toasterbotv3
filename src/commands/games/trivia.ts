@@ -5,7 +5,7 @@ import {
   Message,
 } from 'discord.js';
 import Trivia from '../../games/Trivia/Trivia';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -49,6 +49,7 @@ class TriviaCommand extends Command {
     super(client, info, {
       name: 'trivia',
       enabled: true,
+      cooldown: 10 * 1000,
       options: [
         {
           type: 'INTEGER',
@@ -110,7 +111,11 @@ class TriviaCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const trivia = new Trivia(this.client, interaction);
-    return trivia.start();
+    const [ err ] = await to(trivia.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import Connect4 from '../../games/Connect4/Connect4';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -15,6 +15,18 @@ class Connect4Command extends Command {
       name: 'connect4',
       aliases: ['c4'],
       enabled: true,
+      cooldown: 10 * 1000,
+      botPermissions: [
+        'ADD_REACTIONS', 
+        'VIEW_CHANNEL', 
+        'SEND_MESSAGES', 
+        'USE_EXTERNAL_EMOJIS',
+      ],
+      memberPermissions: [
+        'ADD_REACTIONS', 
+        'VIEW_CHANNEL', 
+        'SEND_MESSAGES', 
+      ],
       options: [
         {
           name: 'challenger',
@@ -52,7 +64,11 @@ class Connect4Command extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const connect4 = new Connect4(this.client, interaction);
-    return connect4.start();
+    const [ err ] = await to(connect4.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 

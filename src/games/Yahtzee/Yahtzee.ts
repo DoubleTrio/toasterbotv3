@@ -36,6 +36,7 @@ const YAHTZEE_GAME_INACTIVITY_MESSAGE = i18n.t('game.inactivityMessage', {
 const YAHTZEE_SELECT_CATEGORY_TEXT = i18n.t('yahtzee.selectCategoryText');
 
 class Yahtzee extends Game {
+  
   private message: Message;
 
   private player = new YahtzeePlayer();

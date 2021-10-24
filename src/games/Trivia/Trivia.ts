@@ -8,6 +8,7 @@ import {
   MessageButtonOptions,
   InteractionCollectorOptions,
   ButtonInteraction,
+  Message,
 } from 'discord.js';
 import he = require('he');
 import i18n from 'i18next';
@@ -85,6 +86,8 @@ class Trivia extends Game {
 
   private intermediateTime : number;
 
+  private messageId : string;
+
   private questions : ModifiedTriviaQuestion[];
 
   private scoreData = new Collection<string, TriviaPlayer>();
@@ -116,6 +119,8 @@ class Trivia extends Game {
     this.timeLimit = this.getOptionValue<number>('time') ?? 20000;
     this.totalRounds = this.getOptionValue<number>('rounds') ?? 1;
     this.questions = await this.fetchTriviaQuestions();
+    const message = await this.interaction.fetchReply() as Message;
+    this.messageId = message.id;
   }
 
   private async renderScoreEmbed(message: string) {
@@ -209,7 +214,7 @@ class Trivia extends Game {
   private async awaitAnswers() {
     const options : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,
-      filter: (btnInteraction: ButtonInteraction) => !btnInteraction.user.bot,
+      filter: (btnInteraction: ButtonInteraction) => !btnInteraction.user.bot && btnInteraction.message.id === this.messageId,
       componentType: 'BUTTON',
     };
 

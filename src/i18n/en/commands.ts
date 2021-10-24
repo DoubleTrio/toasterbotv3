@@ -8,19 +8,19 @@ export default {
       Play the classic game of $t(blackjack.name)! First place bets, then get closer to 21 than the dealer!
 
       **Betting**
-      -In the betting phase, type in an integer amount that you want to bet (eg: 100, 30, 7)
+      -In the betting phase, type in a positive integer amount that you want to bet (eg: 100, 30, 7)
       -The bet must be a minimum of $5 
       -The bet must not exceed your total amount of money
 
       **Playing**
-      -Click on one of the following buttons below to choose your action. 
+      -Click on one of the following buttons below to choose your action 
       -\`Hit\` - Adds a random card from the deck into your hand
       -\`Stand\` - Ends your turn and the dealers play
       -\`Double Down\` - Double your initial bet (if possible) and add **only** one card into your hand
       -\`End Game\` - Ends the current game of $t(blackjack.name)
       
       **Ending**
-      -The game ends once all rounds are finished or the player can no longer bet
+      -The game ends once all rounds are finished or when the player can no longer bet
 
       **Other**
       -The dealer always stays at 16
@@ -28,15 +28,17 @@ export default {
     betTooLow: 'Your bet is too **low**, try again **(>= {{min}})**',
     betTooHigh: 'Your bet is too **high**, try again **(<= {{max}})**',
     btnEndGame: 'End Game',
-    btnHit: 'Hit', 
+    btnHit: 'Hit',
     btnStand: 'Stand',
     btnDoubleDown: 'Double Down',
     canNoLongerBet: 'You can longer bet... You walk away with $t(blackjack.money, { "amount": {{amount}} })',
     dealerHand: 'Dealer Hand',
+    dealerStaysOn: '**Dealer stays on** `{{value}}`',
+    minBet: '**Minimum Bet**',
     money: '**${{amount}}**',
     onDealerBlackjackWin: 'Ouch, although you and the dealer tied, you **lost** because they had a **$t(blackjack.name)**',
     onDealerBust: '**You won!** The dealer busted!',
-    onDealerWin: 'Ouch, the dealer had a better hand than you', 
+    onDealerWin: 'Ouch, the dealer had a better hand than you',
     onPlayerWin: '**Nicely done!** You won against the dealer this round!',
     onPlayerBlackjackWin: 'Although you and the dealer tied, you **won** because you had a **$t(blackjack.name)**',
     onDraw: 'You and the dealer **tied!**',

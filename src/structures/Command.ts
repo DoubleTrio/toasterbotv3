@@ -68,7 +68,7 @@ abstract class Command {
     this.nsfw = options.nsfw || false;
     this.cooldown = options.cooldown || 3000;
     this.aliases = options.aliases || [];
-    this.botPermissions = options.botPermissions || ['VIEW_CHANNEL', 'SEND_MESSAGES'];
+    this.botPermissions = options.botPermissions || ['VIEW_CHANNEL', 'SEND_MESSAGES', 'USE_EXTERNAL_EMOJIS'];
     this.memberPermissions = options.memberPermissions || ['VIEW_CHANNEL', 'SEND_MESSAGES'];
   }
 

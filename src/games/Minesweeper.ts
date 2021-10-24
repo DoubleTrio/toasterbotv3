@@ -167,6 +167,18 @@ class Minesweeper extends Game {
     });
 
     this.revealedPositions = this.findLargestSafeRegion();
+
+    for (const pos of this.revealedPositions) {
+      for (let i = 0; i < this.safePositions.length; i++) {
+        const safe = this.safePositions[i];
+        if (safe != null && safe[0] === pos[0] && safe[1] === pos[1]) {
+          this.safePositions[i] = null;
+        }
+      }
+    }
+
+    this.safePositions = this.safePositions.filter((pos) => pos !== null);
+
     await this.renderBoard(true);
     this.logsMessage = await this.renderEmbed(generationText) as Message;
   }
@@ -208,7 +220,7 @@ class Minesweeper extends Game {
           iconURL: this.interaction.user.avatarURL(),
         }),
       },
-      
+
       timestamp: Date.now(),
     };
 

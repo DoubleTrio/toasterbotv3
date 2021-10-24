@@ -4,7 +4,7 @@ import {
   Message,
 } from 'discord.js';
 import Duel from '../../games/Duel/Duel';
-import { generateIntegerChoices } from '../../helpers';
+import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
@@ -14,6 +14,7 @@ class DuelCommand extends Command {
     super(client, info, {
       name: 'duel',
       enabled: false,
+      cooldown: 10 * 1000,
       options: [
         {
           name: 'challenger',
@@ -71,7 +72,11 @@ class DuelCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const duel = new Duel(this.client, interaction);
-    return duel.start();
+    const [ err ] = await to(duel.start());
+    if (err) {
+      console.log(err);
+      this.client.logError(this, err);
+    }
   }
 }
 
