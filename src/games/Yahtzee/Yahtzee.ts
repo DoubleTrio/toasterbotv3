@@ -27,6 +27,8 @@ enum YahtzeeStatus {
   CATEGORIES,
 }
 
+type YahtzeeActions = 'REROLL' | 'PLAY';
+
 const YAHTZEE_REACTIONS = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
 
 const YAHTZEE_GAME_INACTIVITY_MESSAGE = i18n.t('game.inactivityMessage', {
@@ -36,7 +38,6 @@ const YAHTZEE_GAME_INACTIVITY_MESSAGE = i18n.t('game.inactivityMessage', {
 const YAHTZEE_SELECT_CATEGORY_TEXT = i18n.t('yahtzee.selectCategoryText');
 
 class Yahtzee extends Game {
-  
   private message: Message;
 
   private player = new YahtzeePlayer();
@@ -80,12 +81,8 @@ class Yahtzee extends Game {
     }
   }
 
-  private async reactionHasUser(reaction : MessageReaction) : Promise<string> {
-    const users = await reaction.users.fetch();
-    const interactionUser = users
-      .filter((user) => user.id === this.interaction.user.id)
-      .first();
-    return interactionUser?.id;
+  private terminal() {
+    return Object.values(this.player.scoreSheet.categories).every((category) => category.isMarked);
   }
 
   protected async initialize() : Promise<void> {
@@ -108,20 +105,27 @@ class Yahtzee extends Game {
       buttonOptions,
     );
 
+    const endTurn = () => {
+      this.status = YahtzeeStatus.CATEGORIES;
+      this.renderEmbed(YAHTZEE_SELECT_CATEGORY_TEXT);
+      buttonCollector.stop();
+    };
+
     return new Promise((resolve) => {
       buttonCollector.on('end', (collected) => {
         if (!collected.size) {
           this.hasEnded = true;
-          return resolve();
         }
+        resolve();
       });
 
       buttonCollector.on('collect', async (btnInteraction) => {
         btnInteraction.deferUpdate();
-        if (btnInteraction.customId === 'REROLL') {
-          const u = btnInteraction.message as Message;
-          const x = await u.fetch();
-          for (const reaction of x.reactions.cache.values()) {
+        const customId = btnInteraction.customId as YahtzeeActions;
+        if (customId === 'REROLL') {
+          const m = btnInteraction.message as Message;
+          const message = await m.fetch();
+          for (const reaction of message.reactions.cache.values()) {
             const hasUser = await this.reactionHasUser(reaction);
             const emojiName = reaction.emoji.name;
             if (hasUser) {
@@ -132,19 +136,13 @@ class Yahtzee extends Game {
 
           const rerollList = this.player.getRerollList();
           this.player.scoreSheet.reroll(rerollList);
-          if (this.player.canReroll) {
-            this.status = YahtzeeStatus.CATEGORIES;
-            this.renderEmbed(YAHTZEE_SELECT_CATEGORY_TEXT);
-            buttonCollector.stop();
-            resolve();
+          if (!this.player.canReroll) {
+            endTurn();
           } else {
             this.renderEmbed();
           }
-        } else {
-          this.status = YahtzeeStatus.CATEGORIES;
-          this.renderEmbed(YAHTZEE_SELECT_CATEGORY_TEXT);
-          buttonCollector.stop();
-          resolve();
+        } else if (customId === 'PLAY') {
+          endTurn();
         }
       });
     });
@@ -176,10 +174,6 @@ class Yahtzee extends Game {
         }
       });
     });
-  }
-
-  private terminal() {
-    return Object.values(this.player.scoreSheet.categories).every((category) => category.isMarked);
   }
 
   private renderEmbed(info?: string) {
@@ -277,6 +271,14 @@ class Yahtzee extends Game {
     return this.interaction.editReply(payload);
   }
 
+  private async reactionHasUser(reaction : MessageReaction) : Promise<string> {
+    const users = await reaction.users.fetch();
+    const interactionUser = users
+      .filter((user) => user.id === this.interaction.user.id)
+      .first();
+    return interactionUser?.id;
+  }
+
   private createCategoryActionRow() : MessageActionRowOptions {
     const categoryOptions: MessageSelectOptionData[] = Object.entries(this.player.scoreSheet.categories)
       .filter(([, category]) => !category.isMarked)
@@ -305,7 +307,7 @@ class Yahtzee extends Game {
         label: i18n.t('yahtzee.rerollButtonText'),
         customId: 'REROLL',
         type: 'BUTTON',
-        disabled: this.player.canReroll,
+        disabled: !this.player.canReroll,
       },
       {
         style: 'PRIMARY',

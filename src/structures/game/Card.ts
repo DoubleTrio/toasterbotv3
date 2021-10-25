@@ -27,7 +27,7 @@ class Card {
         cards.push(card);
       }
     }
-    return _.shuffle(cards); 
+    return _.shuffle(cards);
   }
 
   private _value : CardValue;

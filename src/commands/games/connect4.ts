@@ -17,15 +17,15 @@ class Connect4Command extends Command {
       enabled: true,
       cooldown: 10 * 1000,
       botPermissions: [
-        'ADD_REACTIONS', 
-        'VIEW_CHANNEL', 
-        'SEND_MESSAGES', 
+        'ADD_REACTIONS',
+        'VIEW_CHANNEL',
+        'SEND_MESSAGES',
         'USE_EXTERNAL_EMOJIS',
       ],
       memberPermissions: [
-        'ADD_REACTIONS', 
-        'VIEW_CHANNEL', 
-        'SEND_MESSAGES', 
+        'ADD_REACTIONS',
+        'VIEW_CHANNEL',
+        'SEND_MESSAGES',
       ],
       options: [
         {
@@ -64,7 +64,7 @@ class Connect4Command extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const connect4 = new Connect4(this.client, interaction);
-    const [ err ] = await to(connect4.start());
+    const [err] = await to(connect4.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

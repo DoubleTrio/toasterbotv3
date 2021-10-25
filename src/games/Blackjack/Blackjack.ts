@@ -14,7 +14,7 @@ import {
 import i18n from 'i18next';
 import {
   Game,
-	ToasterBot,
+  ToasterBot,
 } from '../../structures';
 import BlackjackCard from './BlackjackCard';
 import BlackjackPlayer from './BlackjackPlayer';
@@ -35,7 +35,7 @@ class Blackjack extends Game {
 
   private dealer : BlackjackPlayerBase = new BlackjackPlayerBase();
 
-	private dealerStaysOn : number;
+  private dealerStaysOn : number;
 
   private player : BlackjackPlayer;
 
@@ -69,8 +69,8 @@ class Blackjack extends Game {
 
       this.renderEmbed();
       await this.awaitBlackjackRound().catch(() => {
-				throw new Error('err');
-			});
+        throw new Error('err');
+      });
 
       if (this.hasEnded) {
         return;
@@ -336,7 +336,7 @@ class Blackjack extends Game {
         if (!collected.size) {
           this.hasEnded = true;
         }
-				resolve();
+        resolve();
       });
 
       buttonCollector.on('collect', async (btnInteraction) => {

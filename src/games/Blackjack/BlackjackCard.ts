@@ -1,5 +1,7 @@
 import _ = require('lodash');
-import { Card, CardConfig, CardSuit, CardValue } from '../../structures';
+import {
+  Card, CardConfig, CardSuit, CardValue,
+} from '../../structures';
 
 class BlackjackCard extends Card {
   static generateDeck() : BlackjackCard[] {
@@ -9,7 +11,7 @@ class BlackjackCard extends Card {
     for (const value of values) {
       for (const suit of suits) {
         let gameValue;
-  
+
         if (['J', 'Q', 'K'].includes(value)) {
           gameValue = 10;
         } else if (value === 'A') {
@@ -17,17 +19,17 @@ class BlackjackCard extends Card {
         } else {
           gameValue = Number(value);
         }
-  
+
         const card = new BlackjackCard({
           value,
           suit,
           display: `**${suit + value}**`,
         }, gameValue);
-  
+
         cards.push(card);
       }
     }
-    return _.shuffle(cards); 
+    return _.shuffle(cards);
   }
 
   private _gameValue : number;

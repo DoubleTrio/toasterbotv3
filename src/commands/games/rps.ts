@@ -61,7 +61,7 @@ class RPSCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const rps = new RPS(this.client, interaction);
-    const [ err ] = await to(rps.start());
+    const [err] = await to(rps.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

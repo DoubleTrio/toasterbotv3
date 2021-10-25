@@ -43,7 +43,7 @@ class BlackjackCommand extends Command {
         },
         {
           type: 'INTEGER',
-          name: 'bet', 
+          name: 'bet',
           description: 'The minimum bet per round (default: 5)',
           choices: generateIntegerChoices(10, (n) => {
             const value = 5 * (n + 1);
@@ -55,7 +55,7 @@ class BlackjackCommand extends Command {
         },
         {
           type: 'INTEGER',
-          name: 'stay', 
+          name: 'stay',
           description: 'Dealer stays on n (default: 16)',
           choices: generateIntegerChoices(3, (n) => {
             const value = 15 + n;
@@ -77,7 +77,7 @@ class BlackjackCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const blackjack = new Blackjack(this.client, interaction);
-    const [ err ] = await to(blackjack.start());
+    const [err] = await to(blackjack.start());
     if (err) {
       this.client.logError(this, err);
     }

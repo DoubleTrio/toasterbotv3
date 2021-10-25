@@ -42,6 +42,8 @@ class CommandHandler {
         this.addExistingAliases(command);
         if (command.enabled) {
           this.commands.set(command.name, command);
+        } else {
+          console.log(command.name);
         }
       }
     }

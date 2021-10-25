@@ -1,5 +1,6 @@
 import { APIMessage } from 'discord-api-types';
 import {
+  Collection,
   CommandInteraction, CommandInteractionOption, GuildMember, Message, User,
 } from 'discord.js';
 import { ToasterBot } from '..';
@@ -23,6 +24,8 @@ interface BoardConfig<T> {
 type OptionValue = string | boolean | number;
 
 abstract class Game {
+  static players = new Collection<string, Set<string>>();
+
   readonly interaction: CommandInteraction;
 
   readonly client: ToasterBot;
@@ -32,6 +35,8 @@ abstract class Game {
   protected hasEnded = false;
 
   protected timeLimit : number;
+
+  private players = new Set<string>();
 
   constructor(client: ToasterBot, interaction: CommandInteraction, config? : GameConfig) {
     this.client = client;
@@ -56,17 +61,68 @@ abstract class Game {
 
   protected abstract initialize(interaction: CommandInteraction) : void;
 
-  public start() : Promise<Message | APIMessage | void> {
+  public async start() : Promise<Message | APIMessage | void> {
+    this.addPlayer(this.interaction.user);
+    if (this.isTwoPlayerGame()) {
+      console.log('here');
+    }
 
-    return this.play();
+    if (this.isMultiplayerGame()) {
+      console.log('here');
+    }
+
+    if (this.hasEnded) {
+      return;
+    }
+
+    await this.play();
+    this.removeAllPlayers();
   }
 
   protected setEmbedColor(color: EmbedColor) : void {
     this.embedColor = color;
   }
 
+  private addPlayer(user : User) : void {
+    const channelId = this.interaction.channel.id;
+    const userId = user.id;
+    if (!Game.players.has(channelId)) {
+      const set = new Set<string>();
+      set.add(userId);
+      Game.players.set(channelId, set);
+    } else {
+      Game.players.get(channelId).add(userId);
+    }
+
+    this.players.add(userId);
+  }
+
+  private removePlayer(user : User) : void {
+    const channelId = this.interaction.channel.id;
+    Game.players.get(channelId).delete(user.id);
+  }
+
+  private removeAllPlayers() : void {
+    const channelId = this.interaction.channel.id;
+    this.players.forEach((playerId) => {
+      Game.players.get(channelId).delete(playerId);
+    });
+  }
+
   private findOption(name: string) : CommandInteractionOption {
     return this.interaction.options.data.find((option) => option.name === name);
+  }
+
+  private hasOption(name : string) : boolean {
+    return this.findOption(name) !== undefined;
+  }
+
+  private isMultiplayerGame() : boolean {
+    return this.hasOption('pmin') || this.hasOption('pmax');
+  }
+
+  private isTwoPlayerGame() : boolean {
+    return this.hasOption('challenger');
   }
 
   protected getOptionValue<T extends OptionValue>(name: string) : T {

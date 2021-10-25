@@ -38,7 +38,7 @@ class CommandBase extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const [ err ] = await to(new Promise((resolve) => resolve('start')));
+    const [err] = await to(new Promise((resolve) => resolve('start')));
     if (err) {
       console.log(err);
       this.client.logError(this, err);

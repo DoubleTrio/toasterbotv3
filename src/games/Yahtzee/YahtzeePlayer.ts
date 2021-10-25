@@ -37,7 +37,7 @@ class YahtzeePlayer {
   }
 
   get canReroll() : boolean {
-    return this.scoreSheet.rerolls <= 0;
+    return this.scoreSheet.rerolls > 0;
   }
 
   public scoreSheet: YahtzeeScoreSheet = new YahtzeeScoreSheet();

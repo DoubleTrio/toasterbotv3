@@ -111,7 +111,7 @@ class TriviaCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const trivia = new Trivia(this.client, interaction);
-    const [ err ] = await to(trivia.start());
+    const [err] = await to(trivia.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

@@ -95,8 +95,8 @@ class Connect4 extends Game {
   }
 
   protected async initialize() : Promise<void> {
-    const width = this.getOptionValue<number>('width') || 7;
-    const height = this.getOptionValue<number>('height') || 6;
+    const width = this.getOptionValue<number>('width') ?? 7;
+    const height = this.getOptionValue<number>('height') ?? 6;
     this.board = Game.generateBoard<number>({
       width,
       height,

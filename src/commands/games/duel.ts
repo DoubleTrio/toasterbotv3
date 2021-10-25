@@ -72,7 +72,7 @@ class DuelCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const duel = new Duel(this.client, interaction);
-    const [ err ] = await to(duel.start());
+    const [err] = await to(duel.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

@@ -3,7 +3,6 @@ import {
   ClientOptions,
   ApplicationCommandData,
   TextChannel,
-  MessageEmbedOptions,
   Message,
 } from 'discord.js';
 import { EmbedColor } from '../types';
@@ -116,7 +115,7 @@ class ToasterBot extends Client {
         },
         {
           name: '**Error Type**',
-          value: `\`${error.name}\``
+          value: `\`${error.name}\``,
         },
         {
           name: '**Error Message**',

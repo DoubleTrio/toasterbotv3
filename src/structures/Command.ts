@@ -56,20 +56,20 @@ abstract class Command {
 
   constructor(client: ToasterBot, info: CommandInfo, options: CommandOptions) {
     this.client = client;
-    this.group = info.group || 'Unknown';
-    this.description = info.description || 'No description available';
-    this.extendedDescription = info.extendedDescription || 'No extended description available';
-    this.enabled = options.enabled || true;
+    this.group = info.group ?? 'Unknown';
+    this.description = info.description ?? 'No description available';
+    this.extendedDescription = info.extendedDescription ?? 'No extended description available';
+    this.enabled = options.enabled ?? true;
     this.name = options.name;
-    this.options = options.options || [];
-    this.defaultPermission = options.defaultPermission || false;
-    this.guildOnly = options.guildOnly || false;
-    this.ownerOnly = options.ownerOnly || false;
-    this.nsfw = options.nsfw || false;
-    this.cooldown = options.cooldown || 3000;
-    this.aliases = options.aliases || [];
-    this.botPermissions = options.botPermissions || ['VIEW_CHANNEL', 'SEND_MESSAGES', 'USE_EXTERNAL_EMOJIS'];
-    this.memberPermissions = options.memberPermissions || ['VIEW_CHANNEL', 'SEND_MESSAGES'];
+    this.options = options.options ?? [];
+    this.defaultPermission = options.defaultPermission ?? false;
+    this.guildOnly = options.guildOnly ?? false;
+    this.ownerOnly = options.ownerOnly ?? false;
+    this.nsfw = options.nsfw ?? false;
+    this.cooldown = options.cooldown ?? 3000;
+    this.aliases = options.aliases ?? [];
+    this.botPermissions = options.botPermissions ?? ['VIEW_CHANNEL', 'SEND_MESSAGES', 'USE_EXTERNAL_EMOJIS'];
+    this.memberPermissions = options.memberPermissions ?? ['VIEW_CHANNEL', 'SEND_MESSAGES'];
   }
 
   abstract runInteraction(interaction: CommandInteraction) : Promise<unknown> | unknown;

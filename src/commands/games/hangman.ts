@@ -81,7 +81,7 @@ class HangmanCommand extends Command {
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const hangman = new Hangman(this.client, interaction);
-    const [ err ] = await to(hangman.start());
+    const [err] = await to(hangman.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

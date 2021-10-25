@@ -36,9 +36,9 @@ class RPS extends Game {
 
   protected async initialize() : Promise<void> {
     this.challenger = this.getUserValue('challenger');
-    this.requiredWins = this.getOptionValue<number>('wins') || 1;
-    this.timeLimit = this.getOptionValue<number>('time') || 20000;
-    this.intermediateTime = this.getOptionValue<number>('intermediate') || 5000;
+    this.requiredWins = this.getOptionValue<number>('wins') ?? 1;
+    this.timeLimit = this.getOptionValue<number>('time') ?? 20000;
+    this.intermediateTime = this.getOptionValue<number>('intermediate') ?? 5000;
     this.setPlayers();
     const title = i18n.t('game.challengeMessage', {
       player: this.playerData.get(this.interaction.user.id),
@@ -52,7 +52,7 @@ class RPS extends Game {
         title,
       },
     ).awaitResponse(this.challenger.user.id);
-    
+
     const message = await this.interaction.fetchReply() as Message;
     this.messageId = message.id;
   }

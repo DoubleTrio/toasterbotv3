@@ -15,22 +15,22 @@ class YahtzeeCommand extends Command {
       enabled: true,
       aliases: ['yz'],
       botPermissions: [
-        'VIEW_CHANNEL', 
-        'SEND_MESSAGES', 
-        'ADD_REACTIONS', 
+        'VIEW_CHANNEL',
+        'SEND_MESSAGES',
+        'ADD_REACTIONS',
         'USE_EXTERNAL_EMOJIS',
       ],
       memberPermissions: [
-        'VIEW_CHANNEL', 
-        'SEND_MESSAGES', 
-        'ADD_REACTIONS', 
+        'VIEW_CHANNEL',
+        'SEND_MESSAGES',
+        'ADD_REACTIONS',
       ],
     });
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
     const yahtzee = new Yahtzee(this.client, interaction);
-    const [ err ] = await to(yahtzee.start());
+    const [err] = await to(yahtzee.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

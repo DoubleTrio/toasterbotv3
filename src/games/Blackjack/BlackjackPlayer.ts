@@ -1,11 +1,10 @@
-import BlackjackPlayerBase from "./BlackjackPlayerBase";
+import BlackjackPlayerBase from './BlackjackPlayerBase';
 
 class BlackjackPlayer extends BlackjackPlayerBase {
-
   private _bet : number;
 
   private _minBet : number;
-  
+
   private _money : number;
 
   get minBet() : number {
