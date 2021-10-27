@@ -9,7 +9,7 @@ import {
   EmbedFieldData,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot } from '../../structures';
+import { ExtendedUser, Game, ToasterBot } from '../../structures';
 import ScrabblePlayer from './ScrabblePlayer';
 import ScrabbleLetterSystem from './ScrabbleLetterSystem';
 
@@ -246,7 +246,11 @@ class Scrabble extends Game {
       if (this.playerData.has(id)) {
         this.playerData.get(id).addScore(word, score);
       } else {
-        this.playerData.set(id, new ScrabblePlayer(message.author, { nickname: message.nickname }));
+        const extendedUser : ExtendedUser = {
+          user: message.author,
+          nickname: message.nickname ?? message.author.username
+        };
+        this.playerData.set(id, new ScrabblePlayer(extendedUser, { nickname: message.nickname }));
         this.playerData.get(id).addScore(word, score);
       }
     }

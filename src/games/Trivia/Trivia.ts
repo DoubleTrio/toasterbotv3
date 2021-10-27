@@ -9,6 +9,7 @@ import {
   InteractionCollectorOptions,
   ButtonInteraction,
   Message,
+  GuildMember,
 } from 'discord.js';
 import he = require('he');
 import i18n from 'i18next';
@@ -131,7 +132,7 @@ class Trivia extends Game {
 
     const userScoreField: EmbedFieldData[] = Array.from(this.scoreData.values()).map(
       (player) => ({
-        name: `${player.user.username} (${player.answer ? player.answer : i18n.t('trivia.noAnswer')})`,
+        name: `${player.extendedUser.nickname} (${player.answer ? player.answer : i18n.t('trivia.noAnswer')})`,
         value: `${player.score}`,
         inline: true,
       }),
@@ -231,7 +232,7 @@ class Trivia extends Game {
         if (player) {
           player.setAnswer(answer);
         } else {
-          const newPlayer = new TriviaPlayer(user);
+          const newPlayer = new TriviaPlayer(Game.createdExtendedUser(btnInteraction.user, btnInteraction.member as GuildMember));
           newPlayer.setAnswer(answer);
           this.scoreData.set(user.id, newPlayer);
         }
@@ -248,7 +249,7 @@ class Trivia extends Game {
           const correctUsers : string[] = [];
           for (const player of this.scoreData.values()) {
             if (player.answer === this.currentQuestion.correctAnswer) {
-              correctUsers.push(player.user.username);
+              correctUsers.push(player.extendedUser.nickname);
               player.earnPoints(this.currentQuestion.points);
             }
           }

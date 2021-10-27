@@ -1,5 +1,4 @@
-import { User } from 'discord.js';
-import { Player } from '../../structures';
+import { ExtendedUser, Player } from '../../structures';
 import { TriviaLetter } from './types';
 
 class TriviaPlayer extends Player {
@@ -15,7 +14,7 @@ class TriviaPlayer extends Player {
     return this._score;
   }
 
-  constructor(user: User) {
+  constructor(user: ExtendedUser) {
     super(user, {});
   }
 

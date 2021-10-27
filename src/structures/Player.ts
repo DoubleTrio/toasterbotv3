@@ -1,4 +1,4 @@
-import { User } from 'discord.js';
+import { ExtendedUser } from '.';
 
 interface PlayerConfig {
   nickname?: string;
@@ -6,16 +6,15 @@ interface PlayerConfig {
 }
 
 abstract class Player {
-  readonly user: User;
+  readonly extendedUser: ExtendedUser;
 
   readonly playerId: number;
 
   readonly nickname?: string;
 
-  constructor(user: User, config: PlayerConfig) {
-    this.user = user;
+  constructor(user: ExtendedUser, config: PlayerConfig) {
+    this.extendedUser = user;
     this.playerId = config.playerId || null;
-    this.nickname = config.nickname || user.username;
   }
 }
 

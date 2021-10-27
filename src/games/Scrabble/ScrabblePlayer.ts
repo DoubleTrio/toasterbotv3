@@ -1,5 +1,4 @@
-import { User } from 'discord.js';
-import { Player, PlayerConfig } from '../../structures';
+import { ExtendedUser, Player, PlayerConfig } from '../../structures';
 
 class ScrabblePlayer extends Player {
   private _score = 0;
@@ -8,7 +7,7 @@ class ScrabblePlayer extends Player {
 
   private _gain? : number = null;
 
-  constructor(user: User, config: PlayerConfig) {
+  constructor(user: ExtendedUser, config: PlayerConfig) {
     super(user, config);
   }
 

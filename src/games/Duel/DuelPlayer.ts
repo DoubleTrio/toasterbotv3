@@ -1,5 +1,5 @@
 import { User } from 'discord.js';
-import { Player, PlayerConfig } from '../../structures';
+import { ExtendedUser, Player, PlayerConfig } from '../../structures';
 import {
   DuelChoice, DUEL_CHOICES, Gun, Mirror, Protection, Shield, Spell, Sword, Weapon,
 } from './types';
@@ -95,7 +95,7 @@ class DuelPlayer extends Player {
     return this._hasAmmo;
   }
 
-  constructor(user: User, config: PlayerConfig, gameConfig: DuelPlayerConfig) {
+  constructor(user: ExtendedUser, config: PlayerConfig, gameConfig: DuelPlayerConfig) {
     super(user, config);
     this._config = gameConfig;
     this._swords = gameConfig.swords;

@@ -8,14 +8,12 @@ import {
   Command, CommandInfo, ToasterBot,
 } from '../../structures';
 
-class CommandBase extends Command {
+class MatchingCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
     super(client, info, {
-      name: 'base',
-      aliases: [],
+      name: 'matching',
+      aliases: ['match'],
       enabled: false,
-      botPermissions: [],
-      memberPermissions: [],
       nsfw: false,
       cooldown: 10 * 1000,
       ownerOnly: true,
@@ -46,4 +44,4 @@ class CommandBase extends Command {
   }
 }
 
-export default CommandBase;
+export default MatchingCommand;

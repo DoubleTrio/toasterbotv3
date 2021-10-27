@@ -28,6 +28,13 @@ type OptionValue = string | boolean | number;
 abstract class Game {
   static players = new Collection<string, Set<string>>();
 
+  static createdExtendedUser(user : User, member : GuildMember) : ExtendedUser {
+    return {
+      user,
+      nickname: member.nickname ?? user.username,
+    }
+  }
+  
   readonly interaction: CommandInteraction;
 
   readonly client: ToasterBot;
@@ -189,11 +196,7 @@ abstract class Game {
     }
 
     if (option.type !== 'USER') throw new Error(`${option.name} is not type "USER"`);
-    const member = option.member as GuildMember;
-    return {
-      user: option.user,
-      nickname: member.nickname ?? option.user.username,
-    };
+    return Game.createdExtendedUser(option.user, option.member as GuildMember);
   }
 }
 

@@ -71,7 +71,7 @@ class Duel extends Game {
       this.playerData.set(
         player.user.id,
         new DuelPlayer(
-          player.user,
+          player,
           {
             nickname: player.nickname,
           },

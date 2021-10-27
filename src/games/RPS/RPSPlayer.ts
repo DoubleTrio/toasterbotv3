@@ -1,6 +1,5 @@
-import { User } from 'discord.js';
 import i18n from 'i18next';
-import { Player, PlayerConfig } from '../../structures';
+import { ExtendedUser, Player, PlayerConfig } from '../../structures';
 import { RPSChoice, RPS_MATCHUPS } from './types';
 
 class RPSPlayer extends Player {
@@ -16,7 +15,7 @@ class RPSPlayer extends Player {
     return this._choice;
   }
 
-  constructor(user: User, config: PlayerConfig) {
+  constructor(user: ExtendedUser, config: PlayerConfig) {
     super(user, config);
   }
 

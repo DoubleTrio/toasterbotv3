@@ -62,7 +62,7 @@ class RPS extends Game {
       this.playerData.set(
         player.user.id,
         new RPSPlayer(
-          player.user,
+          player,
           {
             nickname: player.nickname,
           },
