@@ -4,7 +4,7 @@ export {
   ExplorePoint,
   Game,
   Point,
-  UserOption,
+  ExtendedUser,
   Card,
   CardConfig,
   CardValue,

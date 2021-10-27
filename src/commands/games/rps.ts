@@ -16,6 +16,7 @@ class RPSCommand extends Command {
       aliases: ['rpsls', 'roshambo'],
       enabled: true,
       cooldown: 10 * 1000,
+      guildOnly: true,
       options: [
         {
           name: 'challenger',

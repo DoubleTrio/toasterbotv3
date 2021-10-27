@@ -299,7 +299,7 @@ class Blackjack extends Game {
       buttonOptions,
     );
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const stand = () : void => {
         while (this.dealer.handValue < this.dealerStaysOn) {
           this.hit(this.dealer);

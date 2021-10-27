@@ -6,18 +6,14 @@ import {
   EmbedFieldData,
   MessageReaction,
   WebhookEditMessageOptions,
-  Collection,
-  GuildMember,
   CollectorFilter,
   User,
 } from 'discord.js';
 import i18n from 'i18next';
 import { EMOJI_TO_ALPHANUMERIC } from '../../constants';
 import { addReactions } from '../../helpers';
-import { Game, ToasterBot, UserOption } from '../../structures';
+import { Game, ToasterBot, ExtendedUser } from '../../structures';
 import { Board } from '../../types';
-import { AcceptEmbed } from '../../utils';
-import Connect4Player from './Connect4Player';
 
 const CONNECT4_TOKENS = ['⚫', '🔴', '🔵'];
 
@@ -38,12 +34,6 @@ const MAX = 1023;
 class Connect4 extends Game {
   private board : Board<number>;
 
-  private challenger: UserOption;
-
-  private isChallengeAccepted : boolean;
-
-  private playerData = new Collection<number, Connect4Player>();
-
   private reactions : string[];
 
   private rowToWin = 4;
@@ -57,40 +47,21 @@ class Connect4 extends Game {
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
-    this.challenger = this.getUserValue('challenger');
-    if (this.challenger.user.bot) {
-      return this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
-    }
-
-    if (this.challenger.user.id === this.interaction.user.id) {
-      return this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
-    }
-
     await this.initialize();
-    if (this.isChallengeAccepted) {
-      addReactions(this.message, this.reactions);
-      const firstPlayer = this.playerData.get(1);
-      const firstPlayerMessage = i18n.t('connect4.turnMessage', {
-        token: CONNECT4_TOKENS[firstPlayer.playerId],
-        player: firstPlayer,
-      });
-      await this.renderEmbed(firstPlayerMessage);
+    addReactions(this.message, this.reactions);
+    const firstPlayer = this.players.get(1);
+    const firstPlayerMessage = i18n.t('connect4.turnMessage', {
+      token: CONNECT4_TOKENS[(this.turn % 2)],
+      player: firstPlayer,
+    });
+    await this.renderEmbed(firstPlayerMessage);
 
-      while (this.turn < MAX) {
-        const currentPlayer = this.player(this.turn + 1);
-        const nextPlayer = this.player(this.turn);
-        this.turn += 1;
-        await this.awaitDropTile(currentPlayer, nextPlayer);
-        if (this.hasEnded) {
-          return;
-        }
-      }
-    } else {
-      return this.interaction.followUp({
-        content: i18n.t('game.declineMessage', {
-          player: this.playerData.get(2),
-        }),
-      });
+    while (this.turn < MAX) {
+      const currentPlayer = this.player(this.turn + 1);
+      const nextPlayer = this.player(this.turn);
+      this.turn += 1;
+      await this.awaitDropTile(currentPlayer, nextPlayer);
+      if (this.hasEnded) return;
     }
   }
 
@@ -102,21 +73,6 @@ class Connect4 extends Game {
       height,
       map: () => 0,
     });
-    this.setPlayers();
-
-    const title = i18n.t('game.challengeMessage', {
-      player: this.playerData.get(1),
-      otherPlayer: this.playerData.get(2),
-      gameName: i18n.t('connect4.name'),
-    });
-
-    this.isChallengeAccepted = await new AcceptEmbed(
-      this.interaction,
-      {
-        color: this.client.colors.primary,
-        title,
-      },
-    ).awaitResponse(this.challenger.user.id);
     this.reactions = CONNECT4_REACTIONS.slice(0, width);
     this.message = await this.interaction.fetchReply() as Message;
   }
@@ -166,9 +122,9 @@ class Connect4 extends Game {
     return winStreaks.some((numArr) => isWinningStreak(numArr, this.rowToWin, value));
   }
 
-  private player(turn: number) : Connect4Player {
-    return this.playerData.get(
-      (turn % this.playerData.size) + 1,
+  private player(turn: number) : ExtendedUser {
+    return this.players.get(
+      (turn % this.players.size) + 1,
     );
   }
 
@@ -219,7 +175,7 @@ class Connect4 extends Game {
     return boardString;
   }
 
-  private async awaitDropTile(player : Connect4Player, nextPlayer : Connect4Player) : Promise<void> {
+  private async awaitDropTile(player : ExtendedUser, nextPlayer : ExtendedUser) : Promise<void> {
     const filter: CollectorFilter<[MessageReaction, User]> = (reaction: MessageReaction, user: User) => {
       const isPlayer = user.id === player.user.id;
       const isBot = user.bot;
@@ -237,27 +193,29 @@ class Connect4 extends Game {
     );
 
     return new Promise((resolve) => {
+      const playerId = (this.turn % this.players.size) + 1;
+      const nextPlayerId = ((this.turn + 1) % this.players.size) + 1;
       const onReaction = (reaction: MessageReaction) => {
         const { name } = reaction.emoji;
         const column = (EMOJI_TO_ALPHANUMERIC[name] as number) - 1;
-        this.dropTile(player.playerId, column);
+        this.dropTile(playerId, column);
 
         if (this.isColumnFull(column)) {
           const index = this.reactions.indexOf(name);
           this.reactions.splice(index, 1);
         }
 
-        if (this.checkWin(this.board, player.playerId, column)) {
+        if (this.checkWin(this.board, playerId, column)) {
           this.hasEnded = true;
           const winMessage = i18n.t('connect4.winMessage', {
-            token: CONNECT4_TOKENS[player.playerId],
+            token: CONNECT4_TOKENS[playerId],
             player,
           });
 
           this.renderEmbed(winMessage);
         } else {
           const nextPlayerMessage = i18n.t('connect4.turnMessage', {
-            token: CONNECT4_TOKENS[nextPlayer.playerId],
+            token: CONNECT4_TOKENS[nextPlayerId],
             player: nextPlayer,
           });
           this.renderEmbed(nextPlayerMessage);
@@ -278,7 +236,7 @@ class Connect4 extends Game {
         if (!reactions.size) {
           this.hasEnded = true;
           this.renderEmbed(i18n.t('game.inactivityMessage', {
-            gameName: 'connect4.name',
+            gameName: i18n.t('connect4.name'),
           }));
           resolve();
         }
@@ -294,29 +252,6 @@ class Connect4 extends Game {
         break;
       }
     }
-  }
-
-  private setPlayers() : void {
-    this.playerData.set(
-      1,
-      new Connect4Player(
-        this.interaction.user,
-        {
-          playerId: 1,
-          nickname: (this.interaction.member as GuildMember).nickname,
-        },
-      ),
-    );
-    this.playerData.set(
-      2,
-      new Connect4Player(
-        this.challenger.user,
-        {
-          playerId: 2,
-          nickname: this.challenger.member.nickname,
-        },
-      ),
-    );
   }
 
   private isColumnFull = (column: number): boolean => {

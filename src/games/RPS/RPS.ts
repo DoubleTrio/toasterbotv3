@@ -2,7 +2,6 @@ import { APIMessage } from 'discord-api-types';
 import {
   CommandInteraction,
   Collection,
-  GuildMember,
   MessageActionRowOptions,
   MessageButtonOptions,
   EmbedFieldData,
@@ -12,15 +11,12 @@ import {
   Message,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot, UserOption } from '../../structures';
-import { AcceptEmbed } from '../../utils';
+import { Game, ToasterBot, ExtendedUser } from '../../structures';
 import RPSPlayer from './RPSPlayer';
 import { RPS_MATCHUPS, RPSChoice } from './types';
 
 class RPS extends Game {
-  private challenger: UserOption;
-
-  private isChallengeAccepted : boolean;
+  private challenger: ExtendedUser;
 
   private intermediateTime : number;
 
@@ -40,18 +36,6 @@ class RPS extends Game {
     this.timeLimit = this.getOptionValue<number>('time') ?? 20000;
     this.intermediateTime = this.getOptionValue<number>('intermediate') ?? 5000;
     this.setPlayers();
-    const title = i18n.t('game.challengeMessage', {
-      player: this.playerData.get(this.interaction.user.id),
-      otherPlayer: this.playerData.get(this.challenger.user.id),
-      gameName: i18n.t('rps.name'),
-    });
-    this.isChallengeAccepted = await new AcceptEmbed(
-      this.interaction,
-      {
-        color: this.client.colors.primary,
-        title,
-      },
-    ).awaitResponse(this.challenger.user.id);
 
     const message = await this.interaction.fetchReply() as Message;
     this.messageId = message.id;
@@ -59,29 +43,13 @@ class RPS extends Game {
 
   protected async play() : Promise<void | APIMessage | Message> {
     await this.initialize();
-    if (this.challenger.user.bot) {
-      return this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
-    }
-
-    if (this.challenger.user.id === this.interaction.user.id) {
-      return this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
-    }
-
-    if (this.isChallengeAccepted) {
-      while (!this.terminal()) {
-        this.renderEmbed();
-        await this.awaitChoices();
-        if (this.hasEnded) {
-          return;
-        }
-        await Game.sleep(this.intermediateTime);
+    while (!this.terminal()) {
+      this.renderEmbed();
+      await this.awaitChoices();
+      if (this.hasEnded) {
+        return;
       }
-    } else {
-      return this.interaction.followUp({
-        content: i18n.t('game.declineMessage', {
-          player: this.playerData.get(this.challenger.user.id),
-        }),
-      });
+      await Game.sleep(this.intermediateTime);
     }
   }
 
@@ -90,24 +58,17 @@ class RPS extends Game {
   }
 
   private setPlayers() {
-    this.playerData.set(
-      this.interaction.user.id,
-      new RPSPlayer(
-        this.interaction.user,
-        {
-          nickname: (this.interaction.member as GuildMember).nickname,
-        },
-      ),
-    );
-    this.playerData.set(
-      this.challenger.user.id,
-      new RPSPlayer(
-        this.challenger.user,
-        {
-          nickname: this.challenger.member.nickname,
-        },
-      ),
-    );
+    this.players.forEach((player) => {
+      this.playerData.set(
+        player.user.id,
+        new RPSPlayer(
+          player.user,
+          {
+            nickname: player.nickname,
+          },
+        ),
+      );
+    });
   }
 
   private getRPSButton(rpsChoice: RPSChoice) : MessageButtonOptions {
@@ -190,7 +151,7 @@ class RPS extends Game {
     return this.playerData.every((player) => player.choice !== null);
   }
 
-  private async awaitChoices() {
+  private async awaitChoices() : Promise<void> {
     const options : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,
       filter: (btnInteraction: ButtonInteraction) => this.playerData.has(btnInteraction.user.id) && btnInteraction.message.id === this.messageId,
@@ -219,7 +180,7 @@ class RPS extends Game {
           this.renderEmbed(i18n.t('game.playerInactivityMessage', {
             gameName: i18n.t('rps.name'),
           }));
-          return resolve(null);
+          return resolve();
         }
         const hostWins = RPS_MATCHUPS[host.choice].wins.get(challenger.choice);
         if (host.choice === challenger.choice) {
@@ -232,7 +193,7 @@ class RPS extends Game {
 
         host.deselect();
         challenger.deselect();
-        resolve(null);
+        resolve();
       });
     });
   }

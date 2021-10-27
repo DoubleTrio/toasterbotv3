@@ -15,6 +15,7 @@ class DuelCommand extends Command {
       name: 'duel',
       enabled: false,
       cooldown: 10 * 1000,
+      guildOnly: true,
       options: [
         {
           name: 'challenger',

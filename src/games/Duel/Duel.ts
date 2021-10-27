@@ -4,12 +4,15 @@ import {
   ButtonInteraction,
   Collection,
   CommandInteraction,
-  EmbedFieldData, GuildMember,
-  InteractionCollectorOptions, Message, MessageActionRowOptions, MessageButtonOptions, MessageEmbedOptions,
+  EmbedFieldData,
+  InteractionCollectorOptions,
+  Message,
+  MessageActionRowOptions,
+  MessageButtonOptions,
+  MessageEmbedOptions,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot, UserOption } from '../../structures';
-import { AcceptEmbed } from '../../utils';
+import { Game, ToasterBot, ExtendedUser } from '../../structures';
 import DuelPlayer from './DuelPlayer';
 import { DuelChoice, Item } from './types';
 
@@ -22,13 +25,11 @@ class Duel extends Game {
 
   private requiredWins : number;
 
-  private challenger: UserOption;
+  private challenger: ExtendedUser;
 
   private playerData = new Collection<string, DuelPlayer>();
 
   private intermediateTime : number;
-
-  private isChallengeAccepted : boolean;
 
   private turn = 0;
 
@@ -40,31 +41,14 @@ class Duel extends Game {
 
   protected async play() : Promise<void | Message | APIMessage> {
     await this.initialize();
-    if (this.challenger.user.bot) {
-      return this.interaction.followUp(i18n.t('cannotChallengeBot'));
-    }
-
-    if (this.challenger.user.id === this.interaction.user.id) {
-      return this.interaction.followUp(i18n.t('cannotChallengeYourself'));
-    }
-
-    if (this.isChallengeAccepted) {
-      while (!this.terminal()) {
-        this.turn += 1;
-        this.renderEmbed();
-        await this.awaitChoices();
-        if (this.isGameOver) {
-          return;
-        }
-        await Game.sleep(this.intermediateTime);
+    while (!this.terminal()) {
+      this.turn += 1;
+      this.renderEmbed();
+      await this.awaitChoices();
+      if (this.isGameOver) {
+        return;
       }
-    } else {
-      return this.interaction.followUp({
-
-        content: i18n.t('game.declineMessage', {
-          player: this.playerData.get(this.challenger.user.id),
-        }),
-      });
+      await Game.sleep(this.intermediateTime);
     }
   }
 
@@ -80,42 +64,24 @@ class Duel extends Game {
     this.startingSpells = this.getOptionValue<number>('') ?? 1;
     this.intermediateTime = this.getOptionValue<number>('intermediate') ?? 5000;
     this.setPlayers();
-    this.isChallengeAccepted = await new AcceptEmbed(
-      this.interaction,
-      {
-        color: this.client.colors.primary,
-        title: `${this.playerData.get(this.interaction.user.id).nickname} has challenged ${this.playerData.get(this.challenger.user.id).nickname} to RPS!`,
-      },
-    ).awaitResponse(this.challenger.user.id);
   }
 
   private setPlayers() {
-    this.playerData.set(
-      this.interaction.user.id,
-      new DuelPlayer(
-        this.interaction.user,
-        {
-          nickname: (this.interaction.member as GuildMember).nickname,
-        },
-        {
-          swords: this.startingSwords,
-          spells: this.startingSpells,
-        },
-      ),
-    );
-    this.playerData.set(
-      this.challenger.user.id,
-      new DuelPlayer(
-        this.challenger.user,
-        {
-          nickname: this.challenger.member.nickname,
-        },
-        {
-          swords: this.startingSwords,
-          spells: this.startingSpells,
-        },
-      ),
-    );
+    this.players.forEach((player) => {
+      this.playerData.set(
+        player.user.id,
+        new DuelPlayer(
+          player.user,
+          {
+            nickname: player.nickname,
+          },
+          {
+            swords: this.startingSwords,
+            spells: this.startingSpells,
+          },
+        ),
+      );
+    });
   }
 
   private createActionButtonRow() : MessageActionRowOptions {

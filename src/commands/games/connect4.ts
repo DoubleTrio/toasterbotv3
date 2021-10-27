@@ -15,6 +15,7 @@ class Connect4Command extends Command {
       name: 'connect4',
       aliases: ['c4'],
       enabled: true,
+      guildOnly: true,
       cooldown: 10 * 1000,
       botPermissions: [
         'ADD_REACTIONS',

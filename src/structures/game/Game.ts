@@ -3,12 +3,14 @@ import {
   Collection,
   CommandInteraction, CommandInteractionOption, GuildMember, Message, User,
 } from 'discord.js';
+import i18n from 'i18next';
 import { ToasterBot } from '..';
 import { EmbedColor } from '../../types';
+import { AcceptEmbed } from '../../utils';
 
-interface UserOption {
+interface ExtendedUser {
   user: User;
-  member: GuildMember;
+  nickname?: string;
 }
 
 interface GameConfig {
@@ -36,7 +38,9 @@ abstract class Game {
 
   protected timeLimit : number;
 
-  private players = new Set<string>();
+  protected players = new Collection<number, ExtendedUser>();
+
+  private playerCounter = 0;
 
   constructor(client: ToasterBot, interaction: CommandInteraction, config? : GameConfig) {
     this.client = client;
@@ -62,9 +66,44 @@ abstract class Game {
   protected abstract initialize(interaction: CommandInteraction) : void;
 
   public async start() : Promise<Message | APIMessage | void> {
-    this.addPlayer(this.interaction.user);
-    if (this.isTwoPlayerGame()) {
-      console.log('here');
+    this.addHost();
+
+    const challenger = this.getChallenger();
+    if (challenger) {
+      if (challenger.user.bot) {
+        return this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
+      }
+
+      if (challenger.user.id === this.interaction.user.id) {
+        return this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
+      }
+
+      this.addPlayer({
+        user: challenger.user,
+        nickname: challenger.nickname,
+      });
+
+      const title = i18n.t('game.challengeMessage', {
+        playerNickname: this.players.get(1).nickname,
+        otherPlayerNickname: this.players.get(2).nickname,
+        gameName: i18n.t(`${this.interaction.commandName}.name`),
+      });
+
+      const isChallengeAccepted = await new AcceptEmbed(
+        this.interaction,
+        {
+          color: this.client.colors.primary,
+          title,
+        },
+      ).awaitResponse(challenger.user.id);
+
+      if (!isChallengeAccepted) {
+        return this.interaction.followUp({
+          content: i18n.t('game.declineMessage', {
+            nickname: this.players.get(2).nickname,
+          }),
+        });
+      }
     }
 
     if (this.isMultiplayerGame()) {
@@ -83,9 +122,21 @@ abstract class Game {
     this.embedColor = color;
   }
 
-  private addPlayer(user : User) : void {
+  private addHost() : void {
+    const { user } = this.interaction;
+    const member = this.interaction.member as GuildMember;
+    const host : ExtendedUser = {
+      user,
+      nickname: member.nickname ?? user.username,
+    };
+
+    this.addPlayer(host);
+  }
+
+  private addPlayer(extendUser : ExtendedUser) : void {
+    this.playerCounter += 1;
     const channelId = this.interaction.channel.id;
-    const userId = user.id;
+    const userId = extendUser.user.id;
     if (!Game.players.has(channelId)) {
       const set = new Set<string>();
       set.add(userId);
@@ -93,20 +144,21 @@ abstract class Game {
     } else {
       Game.players.get(channelId).add(userId);
     }
-
-    this.players.add(userId);
+    this.players.set(this.playerCounter, extendUser);
   }
 
-  private removePlayer(user : User) : void {
+  private removePlayer(extendedUser : ExtendedUser) : void {
     const channelId = this.interaction.channel.id;
-    Game.players.get(channelId).delete(user.id);
+    Game.players.get(channelId).delete(extendedUser.user.id);
+    const key = this.players.findKey((player : ExtendedUser) => player.user.id === extendedUser.user.id);
+    this.players.delete(key);
   }
 
   private removeAllPlayers() : void {
     const channelId = this.interaction.channel.id;
-    this.players.forEach((playerId) => {
-      Game.players.get(channelId).delete(playerId);
-    });
+    for (const player of this.players.values()) {
+      Game.players.get(channelId).delete(player.user.id);
+    }
   }
 
   private findOption(name: string) : CommandInteractionOption {
@@ -121,8 +173,8 @@ abstract class Game {
     return this.hasOption('pmin') || this.hasOption('pmax');
   }
 
-  private isTwoPlayerGame() : boolean {
-    return this.hasOption('challenger');
+  private getChallenger() : ExtendedUser {
+    return this.getUserValue('challenger');
   }
 
   protected getOptionValue<T extends OptionValue>(name: string) : T {
@@ -130,14 +182,19 @@ abstract class Game {
     return option?.value as T;
   }
 
-  protected getUserValue(name: string) : UserOption {
+  protected getUserValue(name: string) : ExtendedUser {
     const option = this.findOption(name);
+    if (!option) {
+      return null;
+    }
+
     if (option.type !== 'USER') throw new Error(`${option.name} is not type "USER"`);
+    const member = option.member as GuildMember;
     return {
       user: option.user,
-      member: option.member as GuildMember,
+      nickname: member.nickname ?? option.user.username,
     };
   }
 }
 
-export { Game, UserOption };
+export { Game, ExtendedUser };

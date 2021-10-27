@@ -76,6 +76,7 @@ class BlackjackCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
+    console.log(interaction.commandName);
     const blackjack = new Blackjack(this.client, interaction);
     const [err] = await to(blackjack.start());
     if (err) {
