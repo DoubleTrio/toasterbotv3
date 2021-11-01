@@ -15,5 +15,37 @@ export default {
     standings: 'Standings',
     turn: 'Turn: {{- turn}}',
     logs: 'Logs',
+    multiplayerEmbed: {
+      aliases: '**Aliases** - {{aliasesText}}',
+      btnEndGameText: 'End Game',
+      btnCommandOnEnd: '**{{nickname}}** has ended {{gameName}}',
+      btnCommandOnJoin: '`{{user}} has joined!`',
+      btnCommandOnLeave: '`{{user}} has left!`',
+      btnJoinText: 'Join',
+      btnLeaveText: 'Leave',
+      btnStartGameText: 'Start Game',
+      commandFormat: '`{{cmd.name}} <{{cmd.args}}>` - {{cmd.description}}',
+      canBegin: '**Can Begin**',
+      currentPlayers: '**Current Players** ({{total}})',
+      hostCommands: '**Host Subcommands** (`{{prefix}}`)',
+      maxPlayers: '**Max Players**',
+      minPlayers: '**Min Players**',
+      commands: {
+        userArg: '@user',
+        invite: {
+          description: 'Automatically add a player to the game',
+          onSuccess: '`Invited {{user}}`',
+          onFail: '`Could not invite ${user} due to max player limit`',
+        },
+        kick: {
+          description: 'Kick a player out of the game',
+          onSuccess: '`Kicked {{user}}`',
+        },
+        unkick: {
+          description: 'Unkick a player out of the game',
+          onSuccess: '`Unkicked {{user}}`',
+        },
+      },
+    },
   },
 };

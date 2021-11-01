@@ -67,15 +67,17 @@ class InteractionCreateEvent extends ToasterBotEvent {
         }
       }
 
-      const cooldownData = client.commandHandler.isOnCooldown(command, interaction.user);
-      if (cooldownData) {
-        return interaction.followUp({
-          content: i18n.t('commandOnCooldown', {
-            timeLeft: cooldownData.timeLeft.toFixed(1),
-            command,
-          }),
-          ephemeral: true,
-        });
+      if (!client.isOwner(interaction.user.id)) {
+        const cooldownData = client.commandHandler.cooldownHandler.getCooldownData(command, interaction.user);
+        if (cooldownData) {
+          return interaction.followUp({
+            content: i18n.t('commandOnCooldown', {
+              timeLeft: cooldownData.timeLeft.toFixed(1),
+              command,
+            }),
+            ephemeral: true,
+          });
+        }
       }
       try {
         command.runInteraction(interaction);

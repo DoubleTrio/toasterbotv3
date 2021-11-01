@@ -3,6 +3,7 @@ import {
   CommandInteraction,
   Message,
 } from 'discord.js';
+import Matching from '../../games/Matching/Matching';
 import { generateIntegerChoices, to } from '../../helpers';
 import {
   Command, CommandInfo, ToasterBot,
@@ -12,19 +13,33 @@ class MatchingCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
     super(client, info, {
       name: 'matching',
-      aliases: ['match'],
-      enabled: false,
+      aliases: ['match', 'memory'],
+      enabled: true,
       nsfw: false,
       cooldown: 10 * 1000,
       ownerOnly: true,
       guildOnly: true,
       options: [
         {
+          name: 'width',
           type: 'INTEGER',
-          name: 'rounds',
-          description: 'The total amount of rounds (default: 5)',
-          choices: generateIntegerChoices(8, (n) => {
-            const value = 3 + (n * 2);
+          required: false,
+          description: 'The width of the board (default: 4)',
+          choices: generateIntegerChoices(5, (n) => {
+            const value = n + 4;
+            return {
+              name: value.toString(),
+              value,
+            };
+          }),
+        },
+        {
+          name: 'height',
+          type: 'INTEGER',
+          required: false,
+          description: 'The height of the board (default: 4)',
+          choices: generateIntegerChoices(5, (n) => {
+            const value = n + 4;
             return {
               name: value.toString(),
               value,
@@ -36,7 +51,8 @@ class MatchingCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const [err] = await to(new Promise((resolve) => resolve('start')));
+    const matching = new Matching(this.client, interaction);
+    const [err] = await to(matching.start());
     if (err) {
       console.log(err);
       this.client.logError(this, err);

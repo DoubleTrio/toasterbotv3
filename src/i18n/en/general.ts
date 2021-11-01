@@ -9,7 +9,7 @@ export default {
   notAvailable: 'Not Available',
   notAvailableShort: 'NA',
   ownerOnlyCommand: 'Only owners can use this command',
-  paginatedEmbedFooter: '',
+  paginatedEmbedFooter: '$t(timeLimitText, { "timeLimitText": {{timeLimit}} }) | $t(requestedByText, { "user": {{user}} )',
   requestedByText: 'Requested by {{user.username}}',
   timeLimitText: 'Action Time Limit: {{timeLimit}} seconds',
 };

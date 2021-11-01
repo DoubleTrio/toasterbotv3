@@ -14,7 +14,7 @@ import {
 import he = require('he');
 import i18n from 'i18next';
 import _ = require('lodash');
-import { Game, ToasterBot } from '../../structures';
+import { ExtendedUser, Game, ToasterBot } from '../../structures';
 import TriviaPlayer from './TriviaPlayer';
 import {
   ModifiedTriviaQuestion,
@@ -232,7 +232,7 @@ class Trivia extends Game {
         if (player) {
           player.setAnswer(answer);
         } else {
-          const newPlayer = new TriviaPlayer(Game.createdExtendedUser(btnInteraction.user, btnInteraction.member as GuildMember));
+          const newPlayer = new TriviaPlayer(ExtendedUser.fromMember(btnInteraction.user, btnInteraction.member as GuildMember));
           newPlayer.setAnswer(answer);
           this.scoreData.set(user.id, newPlayer);
         }

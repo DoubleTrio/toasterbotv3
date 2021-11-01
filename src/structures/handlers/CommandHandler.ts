@@ -1,17 +1,13 @@
 import * as fs from 'fs';
-import { User, Collection } from 'discord.js';
+import { Collection } from 'discord.js';
 import i18n from 'i18next';
 import { Command, CommandInfo, ToasterBot } from '..';
-
-interface CooldownData {
-  command: Command;
-  timeLeft: number;
-}
+import { CooldownHandler } from '.';
 
 class CommandHandler {
   public commands : Collection<string, Command> = new Collection();
 
-  public cooldowns = new Collection<string, Collection<string, number>>();
+  public cooldownHandler = new CooldownHandler();
 
   public aliases : Set<string> = new Set();
 
@@ -48,30 +44,6 @@ class CommandHandler {
       }
     }
     console.log(this.commands);
-  }
-
-  public isOnCooldown(command: Command, user: User) : CooldownData | null {
-    if (!this.cooldowns.has(command.name)) {
-      this.cooldowns.set(command.name, new Collection());
-    }
-    const now = Date.now();
-    const timestamps = this.cooldowns.get(command.name);
-    const cooldownAmount = command.cooldown;
-    if (timestamps?.has(user.id)) {
-      const cooldown = timestamps.get(user.id);
-      if (cooldown) {
-        const expirationTime = cooldown + cooldownAmount;
-        if (now < expirationTime) {
-          const timeLeft = (expirationTime - now) / 1000;
-          return {
-            command,
-            timeLeft,
-          };
-        }
-      }
-    }
-    timestamps?.set(user.id, now);
-    setTimeout(() => timestamps?.delete(user.id), cooldownAmount);
   }
 
   public getCommmand(commandName: string) : Command | undefined {

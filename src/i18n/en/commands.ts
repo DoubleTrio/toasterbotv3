@@ -175,6 +175,11 @@ export default {
     warningTooShort: 'Your word is too short, try again',
     winMessage: '🎉 | Congrats, you guessed the word! The word was **{{word}}**',
   },
+  matching: {
+    name: 'Matching',
+    description: 'Challenge your friend and see who has the wrinkled brain in this memory game!',
+    extendedDescription: 'Extended description of matching',
+  },
   minesweeper: {
     name: 'Minesweeper',
     description: 'Minesweeper, but with spoiler tags!',

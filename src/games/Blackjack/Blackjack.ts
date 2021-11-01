@@ -68,9 +68,7 @@ class Blackjack extends Game {
       this.dealCards();
 
       this.renderEmbed();
-      await this.awaitBlackjackRound().catch(() => {
-        throw new Error('err');
-      });
+      await this.awaitBlackjackRound();
 
       if (this.hasEnded) {
         return;

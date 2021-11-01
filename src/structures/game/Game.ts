@@ -1,17 +1,12 @@
 import { APIMessage } from 'discord-api-types';
 import {
   Collection,
-  CommandInteraction, CommandInteractionOption, GuildMember, Message, User,
+  CommandInteraction, CommandInteractionOption, GuildMember, Message,
 } from 'discord.js';
 import i18n from 'i18next';
-import { ToasterBot } from '..';
+import { ExtendedUser, ToasterBot } from '..';
 import { EmbedColor } from '../../types';
-import { AcceptEmbed } from '../../utils';
-
-interface ExtendedUser {
-  user: User;
-  nickname?: string;
-}
+import { AcceptEmbed, MultiplayerEmbed } from '../../utils';
 
 interface GameConfig {
   timeLimit: number;
@@ -28,13 +23,6 @@ type OptionValue = string | boolean | number;
 abstract class Game {
   static players = new Collection<string, Set<string>>();
 
-  static createdExtendedUser(user : User, member : GuildMember) : ExtendedUser {
-    return {
-      user,
-      nickname: member.nickname ?? user.username,
-    }
-  }
-  
   readonly interaction: CommandInteraction;
 
   readonly client: ToasterBot;
@@ -75,53 +63,28 @@ abstract class Game {
   public async start() : Promise<Message | APIMessage | void> {
     this.addHost();
 
-    const challenger = this.getChallenger();
+    const challenger = this.getUserValue('challenger');
     if (challenger) {
-      if (challenger.user.bot) {
-        return this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
-      }
-
-      if (challenger.user.id === this.interaction.user.id) {
-        return this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
-      }
-
-      this.addPlayer({
-        user: challenger.user,
-        nickname: challenger.nickname,
-      });
-
-      const title = i18n.t('game.challengeMessage', {
-        playerNickname: this.players.get(1).nickname,
-        otherPlayerNickname: this.players.get(2).nickname,
-        gameName: i18n.t(`${this.interaction.commandName}.name`),
-      });
-
-      const isChallengeAccepted = await new AcceptEmbed(
-        this.interaction,
-        {
-          color: this.client.colors.primary,
-          title,
-        },
-      ).awaitResponse(challenger.user.id);
-
-      if (!isChallengeAccepted) {
-        return this.interaction.followUp({
-          content: i18n.t('game.declineMessage', {
-            nickname: this.players.get(2).nickname,
-          }),
-        });
+      const hasChallenger = await this.checkChallenger(challenger);
+      if (!hasChallenger) {
+        return;
       }
     }
 
-    if (this.isMultiplayerGame()) {
-      console.log('here');
+    const pmin = this.getOptionValue<number>('pmin');
+    const pmax = this.getOptionValue<number>('pmax');
+    if (pmin || pmax) {
+      const minPlayers = pmin ?? 2;
+      const maxPlayers = pmax ?? 4;
+      const hasPlayers = await this.checkMultiplayer(minPlayers, maxPlayers);
+      if (!hasPlayers) {
+        return;
+      }
     }
 
-    if (this.hasEnded) {
-      return;
+    if (!this.hasEnded) {
+      await this.play();
     }
-
-    await this.play();
     this.removeAllPlayers();
   }
 
@@ -132,11 +95,7 @@ abstract class Game {
   private addHost() : void {
     const { user } = this.interaction;
     const member = this.interaction.member as GuildMember;
-    const host : ExtendedUser = {
-      user,
-      nickname: member.nickname ?? user.username,
-    };
-
+    const host = ExtendedUser.fromMember(user, member);
     this.addPlayer(host);
   }
 
@@ -176,12 +135,70 @@ abstract class Game {
     return this.findOption(name) !== undefined;
   }
 
-  private isMultiplayerGame() : boolean {
-    return this.hasOption('pmin') || this.hasOption('pmax');
+  private async checkChallenger(challenger : ExtendedUser) : Promise<boolean> {
+    if (challenger.user.bot) {
+      this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
+      return false;
+    }
+
+    if (challenger.user.id === this.interaction.user.id) {
+      this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
+      return false;
+    }
+
+    const title = i18n.t('game.challengeMessage', {
+      playerNickname: this.players.get(1).nickname,
+      otherPlayerNickname: this.players.get(2).nickname,
+      gameName: i18n.t(`${this.interaction.commandName}.name`),
+    });
+
+    const isChallengeAccepted = await new AcceptEmbed(
+      this.interaction,
+      {
+        color: this.client.colors.primary,
+        title,
+      },
+    ).awaitResponse(challenger.user.id);
+
+    if (!isChallengeAccepted) {
+      this.interaction.followUp({
+        content: i18n.t('game.declineMessage', {
+          nickname: this.players.get(2).nickname,
+        }),
+      });
+      return false;
+    }
+
+    this.addPlayer(new ExtendedUser(challenger.user, challenger.nickname ?? challenger.user.username));
+    return true;
   }
 
-  private getChallenger() : ExtendedUser {
-    return this.getUserValue('challenger');
+  private async checkMultiplayer(min : number, max : number) : Promise<boolean> {
+    const gameName = i18n.t(`${this.interaction.commandName}.name`);
+
+    const multiplayerEmbed = new MultiplayerEmbed(
+      this.client,
+      this.interaction,
+      {
+        color: this.client.colors.primary,
+        title: `${this.players.get(1).nickname} has started ${gameName}! Click join to play!`,
+      },
+      {
+        min,
+        max,
+      },
+    );
+
+    const canPlay = await multiplayerEmbed.awaitResponse();
+    if (canPlay) {
+      let index = 1;
+      multiplayerEmbed.players.forEach((player) => {
+        this.players.set(index, player);
+        index += 1;
+      });
+      console.log(multiplayerEmbed.players);
+    }
+    return canPlay;
   }
 
   protected getOptionValue<T extends OptionValue>(name: string) : T {
@@ -196,7 +213,7 @@ abstract class Game {
     }
 
     if (option.type !== 'USER') throw new Error(`${option.name} is not type "USER"`);
-    return Game.createdExtendedUser(option.user, option.member as GuildMember);
+    return ExtendedUser.fromMember(option.user, option.member as GuildMember);
   }
 }
 

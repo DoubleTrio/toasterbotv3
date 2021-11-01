@@ -24,7 +24,7 @@ class BlackjackPlayer extends BlackjackPlayerBase {
   }
 
   get canDoubleDown() : boolean {
-    return this._bet * 2 <= this._money;
+    return this._bet * 2 <= this._money && this.hand.length < 3;
   }
 
   constructor(startingMoney : number, minBet : number) {

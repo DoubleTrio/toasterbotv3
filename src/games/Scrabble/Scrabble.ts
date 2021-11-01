@@ -246,10 +246,7 @@ class Scrabble extends Game {
       if (this.playerData.has(id)) {
         this.playerData.get(id).addScore(word, score);
       } else {
-        const extendedUser : ExtendedUser = {
-          user: message.author,
-          nickname: message.nickname ?? message.author.username
-        };
+        const extendedUser = new ExtendedUser(message.author, message.nickname);
         this.playerData.set(id, new ScrabblePlayer(extendedUser, { nickname: message.nickname }));
         this.playerData.get(id).addScore(word, score);
       }
