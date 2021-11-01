@@ -21,9 +21,9 @@ const MINEWEEPER_BUTTONS = {
   REFRESH_TIMER: 'REFRESH_TIMER',
 } as const;
 
-type Positions = Array<[number, number]>;
-
 type MinesweeperButton = keyof typeof MINEWEEPER_BUTTONS;
+
+type Positions = Array<[number, number]>;
 
 interface Explored {
   [key: string]: boolean
@@ -340,8 +340,8 @@ class Minesweeper extends Game {
             if (this.safePositions.length) {
               const safePosition = this.safePositions.pop();
               const onSafeRevealMessage = i18n.t('minesweeper.onSafeReveal', {
-                column: safePosition[1] + 1,
                 row: safePosition[0] + 1,
+                column: safePosition[1] + 1,
               });
 
               this.renderEmbed(onSafeRevealMessage);
@@ -353,8 +353,8 @@ class Minesweeper extends Game {
             if (this.minePositions.length) {
               const minePosition = this.minePositions.pop();
               const onMineRevealMessage = i18n.t('minesweeper.onMineReveal', {
-                column: minePosition[1] + 1,
                 row: minePosition[0] + 1,
+                column: minePosition[1] + 1,
               });
 
               this.renderEmbed(onMineRevealMessage);

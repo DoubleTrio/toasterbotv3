@@ -14,6 +14,13 @@ interface AcceptEmbedConfig {
   timeLimit?: number;
 }
 
+const ACCEPT_EMBED_BUTTONS = {
+  ACCEPT: 'ACCEPT',
+  DECLINE: 'DECLINE',
+} as const;
+
+type AcceptEmbedButton = keyof typeof ACCEPT_EMBED_BUTTONS;
+
 class AcceptEmbed {
   readonly interaction: CommandInteraction;
 
@@ -57,6 +64,12 @@ class AcceptEmbed {
     });
 
     return new Promise((resolve) => {
+
+      const stop = (outcome : boolean) => {
+        resolve(outcome);
+        collector.stop();
+      }
+
       const collector = this.interaction.channel.createMessageComponentCollector(
         {
           filter,
@@ -68,10 +81,17 @@ class AcceptEmbed {
 
       collector.on('collect', (btnInteraction: ButtonInteraction) => {
         btnInteraction.deferUpdate();
-        if (btnInteraction.customId === 'ACCEPT') {
-          resolve(true);
+        const customId = btnInteraction.customId as AcceptEmbedButton;
+        switch (customId) {
+          case 'ACCEPT':
+            stop(true);
+            break;
+          case 'DECLINE':
+            stop(false);
+            break;
+          default:
+            stop(false);
         }
-        resolve(false);
       });
 
       collector.on('end', () => {
@@ -85,13 +105,13 @@ class AcceptEmbed {
       {
         style: 'SUCCESS',
         label: this.acceptText,
-        customId: 'ACCEPT',
+        customId: ACCEPT_EMBED_BUTTONS.ACCEPT,
         type: 'BUTTON',
       },
       {
         style: 'DANGER',
         label: this.declineText,
-        customId: 'DECLINE',
+        customId: ACCEPT_EMBED_BUTTONS.DECLINE,
         type: 'BUTTON',
       },
     ];

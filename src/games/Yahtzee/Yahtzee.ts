@@ -22,12 +22,17 @@ import { Game, ToasterBot } from '../../structures';
 import YahtzeeCategory from './YahtzeeCategory';
 import YahtzeePlayer from './YahtzeePlayer';
 
+const YAHTZEE_BUTTONS = {
+  REROLL: 'REROLL',
+  PLAY: 'PLAY',
+} as const;
+
+type YahtzeeButton = keyof typeof YAHTZEE_BUTTONS;
+
 enum YahtzeeStatus {
   ROLLING,
   CATEGORIES,
 }
-
-type YahtzeeActions = 'REROLL' | 'PLAY';
 
 const YAHTZEE_REACTIONS = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
 
@@ -121,7 +126,7 @@ class Yahtzee extends Game {
 
       buttonCollector.on('collect', async (btnInteraction) => {
         btnInteraction.deferUpdate();
-        const customId = btnInteraction.customId as YahtzeeActions;
+        const customId = btnInteraction.customId as YahtzeeButton;
         if (customId === 'REROLL') {
           const m = btnInteraction.message as Message;
           const message = await m.fetch();
@@ -305,14 +310,14 @@ class Yahtzee extends Game {
       {
         style: 'SECONDARY',
         label: i18n.t('yahtzee.rerollButtonText'),
-        customId: 'REROLL',
+        customId: YAHTZEE_BUTTONS.REROLL,
         type: 'BUTTON',
         disabled: !this.player.canReroll,
       },
       {
         style: 'PRIMARY',
         label: i18n.t('yahtzee.playButtonText'),
-        customId: 'PLAY',
+        customId: YAHTZEE_BUTTONS.PLAY,
         type: 'BUTTON',
       },
     ];

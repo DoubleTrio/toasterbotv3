@@ -29,7 +29,14 @@ interface SubCommand {
   args: string
 }
 
-type MultiplayerButtonCommands = 'JOIN' | 'LEAVE' | 'START' | 'END';
+const MULTIPLAYER_EMBED_BUTTONS = {
+  JOIN: 'JOIN',
+  LEAVE: 'LEAVE',
+  START: 'START',
+  END: 'END',
+} as const;
+
+type MultiplayerEmbedButton = keyof typeof MULTIPLAYER_EMBED_BUTTONS;
 
 class MultiplayerEmbed {
   readonly interaction: CommandInteraction;
@@ -292,7 +299,7 @@ class MultiplayerEmbed {
       buttonCollector.on('collect', (btnInteraction: ButtonInteraction) => {
         btnInteraction.deferUpdate();
         const userId = btnInteraction.user.id;
-        const customId = btnInteraction.customId as MultiplayerButtonCommands;
+        const customId = btnInteraction.customId as MultiplayerEmbedButton;
 
         switch (customId) {
           case 'JOIN': {
@@ -379,26 +386,26 @@ class MultiplayerEmbed {
       {
         style: 'SUCCESS',
         label: this.joinText,
-        customId: 'JOIN',
+        customId: MULTIPLAYER_EMBED_BUTTONS.JOIN,
         type: 'BUTTON',
       },
       {
         style: 'DANGER',
         label: this.leaveText,
-        customId: 'LEAVE',
+        customId: MULTIPLAYER_EMBED_BUTTONS.LEAVE,
         type: 'BUTTON',
       },
       {
         style: 'SECONDARY',
         label: this.startText,
-        customId: 'START',
+        customId: MULTIPLAYER_EMBED_BUTTONS.START,
         type: 'BUTTON',
         disabled: !this.canStart(),
       },
       {
         style: 'SECONDARY',
         label: this.endText,
-        customId: 'END',
+        customId: MULTIPLAYER_EMBED_BUTTONS.END,
         type: 'BUTTON',
       },
     ];

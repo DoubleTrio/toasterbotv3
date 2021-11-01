@@ -20,7 +20,14 @@ import BlackjackCard from './BlackjackCard';
 import BlackjackPlayer from './BlackjackPlayer';
 import BlackjackPlayerBase from './BlackjackPlayerBase';
 
-type BlackjackButtonAction = 'HIT' | 'STAND' | 'DOUBLE_DOWN' | 'END_GAME';
+const BLACKJACK_BUTTONS = {
+  HIT: 'HIT',
+  STAND: 'STAND',
+  DOUBLE_DOWN: 'DOUBLE_DOWN',
+  END_GAME: 'END_GAME',
+} as const;
+
+type BlackjackButton = keyof typeof BLACKJACK_BUTTONS;
 
 type BlackjackPhase = 'BETTING' | 'PLAYING';
 
@@ -340,7 +347,7 @@ class Blackjack extends Game {
       buttonCollector.on('collect', async (btnInteraction) => {
         btnInteraction.deferUpdate();
         buttonCollector.resetTimer();
-        switch (btnInteraction.customId as BlackjackButtonAction) {
+        switch (btnInteraction.customId as BlackjackButton) {
           case 'HIT': {
             this.hit(this.player);
             if (this.player.isOver21) {
@@ -384,28 +391,28 @@ class Blackjack extends Game {
       {
         style: 'SUCCESS',
         label: i18n.t('blackjack.btnHit'),
-        customId: 'HIT',
+        customId: BLACKJACK_BUTTONS.HIT,
         type: 'BUTTON',
         disabled: isDisabled,
       },
       {
         style: 'PRIMARY',
         label: i18n.t('blackjack.btnStand'),
-        customId: 'STAND',
+        customId: BLACKJACK_BUTTONS.STAND,
         type: 'BUTTON',
         disabled: isDisabled,
       },
       {
         style: 'SECONDARY',
         label: i18n.t('blackjack.btnDoubleDown'),
-        customId: 'DOUBLE_DOWN',
+        customId: BLACKJACK_BUTTONS.DOUBLE_DOWN,
         type: 'BUTTON',
         disabled: isDisabled || !this.player.canDoubleDown,
       },
       {
         style: 'DANGER',
         label: i18n.t('blackjack.btnEndGame'),
-        customId: 'END_GAME',
+        customId: BLACKJACK_BUTTONS.END_GAME,
         type: 'BUTTON',
         disabled: isDisabled,
       },
