@@ -43,7 +43,7 @@ class Connect4 extends Game {
   private turn = 1;
 
   constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 60000 });
+    super(client, interaction);
   }
 
   protected async play() : Promise<void | Message | APIMessage> {

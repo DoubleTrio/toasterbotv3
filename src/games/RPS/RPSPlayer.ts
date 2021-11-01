@@ -15,7 +15,7 @@ class RPSPlayer extends Player {
     return this._choice;
   }
 
-  constructor(user: ExtendedUser, config: PlayerConfig) {
+  constructor(user: ExtendedUser, config: PlayerConfig = {}) {
     super(user, config);
   }
 
@@ -37,13 +37,13 @@ class RPSPlayer extends Player {
       player: this,
       playerChoice: this.choice.toLowerCase(),
       action,
-      other,
+      other: other.extendedUser.user,
       otherChoice: other.choice.toLowerCase(),
     });
   }
 
   public winGameMessage(otherPlayer: RPSPlayer) : string {
-    return `${i18n.t('rps.playerWinMessage', { player: this })}\n\n${this.winRoundMessage(otherPlayer)}`;
+    return `${i18n.t('rps.playerWinMessage', { player: this.extendedUser.user })}\n\n${this.winRoundMessage(otherPlayer)}`;
   }
 
   public hasWon(requiredWins: number) : boolean {

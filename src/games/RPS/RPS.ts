@@ -11,13 +11,11 @@ import {
   Message,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot, ExtendedUser } from '../../structures';
+import { Game, ToasterBot } from '../../structures';
 import RPSPlayer from './RPSPlayer';
 import { RPS_MATCHUPS, RPSChoice } from './types';
 
 class RPS extends Game {
-  private challenger: ExtendedUser;
-
   private intermediateTime : number;
 
   private messageId : string;
@@ -31,7 +29,6 @@ class RPS extends Game {
   }
 
   protected async initialize() : Promise<void> {
-    this.challenger = this.getUserValue('challenger');
     this.requiredWins = this.getOptionValue<number>('wins') ?? 1;
     this.timeLimit = this.getOptionValue<number>('time') ?? 20000;
     this.intermediateTime = this.getOptionValue<number>('intermediate') ?? 5000;
@@ -61,12 +58,7 @@ class RPS extends Game {
     this.players.forEach((player) => {
       this.playerData.set(
         player.user.id,
-        new RPSPlayer(
-          player,
-          {
-            nickname: player.nickname,
-          },
-        ),
+        new RPSPlayer(player),
       );
     });
   }
@@ -98,7 +90,7 @@ class RPS extends Game {
           choiceString = RPS_MATCHUPS[player.choice].emoji;
         }
         return {
-          name: `${player.nickname} ${choiceString}`,
+          name: `${player.extendedUser.nickname} ${choiceString}`,
           value: player.wins.toString(),
           inline: true,
         };
@@ -174,7 +166,8 @@ class RPS extends Game {
 
       collector.on('end', async () => {
         const host = this.playerData.get(this.interaction.user.id);
-        const challenger = this.playerData.get(this.challenger.user.id);
+        const challengerId = this.players.get(2).user.id;
+        const challenger = this.playerData.get(challengerId);
         if (!this.allPlayersHasSelected()) {
           this.hasEnded = true;
           this.renderEmbed(i18n.t('game.playerInactivityMessage', {

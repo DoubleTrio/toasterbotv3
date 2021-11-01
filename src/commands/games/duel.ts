@@ -13,14 +13,14 @@ class DuelCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
     super(client, info, {
       name: 'duel',
-      enabled: false,
+      enabled: true,
       cooldown: 10 * 1000,
       guildOnly: true,
       options: [
         {
           name: 'challenger',
           type: 'USER',
-          required: true,
+          required: false,
           description: 'The user to challenge',
         },
         {

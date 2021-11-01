@@ -95,7 +95,7 @@ class DuelPlayer extends Player {
     return this._hasAmmo;
   }
 
-  constructor(user: ExtendedUser, config: PlayerConfig, gameConfig: DuelPlayerConfig) {
+  constructor(user: ExtendedUser, gameConfig: DuelPlayerConfig, config: PlayerConfig = {}) {
     super(user, config);
     this._config = gameConfig;
     this._swords = gameConfig.swords;

@@ -32,7 +32,7 @@ class Connect4Command extends Command {
         {
           name: 'challenger',
           type: 'USER',
-          required: true,
+          required: false,
           description: 'The user to challenge',
         },
         {

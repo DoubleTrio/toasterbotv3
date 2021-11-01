@@ -7,7 +7,7 @@ class ScrabblePlayer extends Player {
 
   private _gain? : number = null;
 
-  constructor(user: ExtendedUser, config: PlayerConfig) {
+  constructor(user: ExtendedUser, config: PlayerConfig = {}) {
     super(user, config);
   }
 

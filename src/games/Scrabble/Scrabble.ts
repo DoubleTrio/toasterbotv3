@@ -101,13 +101,15 @@ class Scrabble extends Game {
     const embed : MessageEmbedOptions = {
       color: this.client.colors.primary,
       title: `${gameStandingsText} | ${turnText}`,
-      fields: this.playerData.sort((playerA, playerB) => playerA.score - playerB.score).map(({
-        nickname, score, gain, word,
-      }) => ({
-        name: `${nickname}: ${score} (+${gain || 0}) | ${word || 'NA'}`,
-        value: '** **',
-        inline: true,
-      })),
+      fields: this.playerData.sort((playerA, playerB) => playerA.score - playerB.score).map((player) => {
+        const { score, gain, word } = player;
+        const { nickname } = player.extendedUser;
+        return {
+          name: `${nickname}: ${score} (+${gain || 0}) | ${word || 'NA'}`,
+          value: '** **',
+          inline: true,
+        };
+      }),
       timestamp: Date.now(),
     };
 
@@ -188,12 +190,12 @@ class Scrabble extends Game {
       for (const player of this.playerData.values()) {
         if (!best) {
           best = player;
-          winners = [player.nickname];
+          winners = [player.extendedUser.nickname];
         } else if (player.score === best.score) {
-          winners.push(player.nickname);
+          winners.push(player.extendedUser.nickname);
         } else if (player.score > best.score) {
           best = player;
-          winners = [player.nickname];
+          winners = [player.extendedUser.nickname];
         }
       }
       message = i18n.t('scrabble.winMultiplayerMessage', {
@@ -247,7 +249,7 @@ class Scrabble extends Game {
         this.playerData.get(id).addScore(word, score);
       } else {
         const extendedUser = new ExtendedUser(message.author, message.nickname);
-        this.playerData.set(id, new ScrabblePlayer(extendedUser, { nickname: message.nickname }));
+        this.playerData.set(id, new ScrabblePlayer(extendedUser));
         this.playerData.get(id).addScore(word, score);
       }
     }

@@ -33,6 +33,7 @@ class CooldownHandler {
     }
     timestamps?.set(user.id, now);
     setTimeout(() => timestamps?.delete(user.id), cooldownAmount);
+    return null;
   }
 }
 

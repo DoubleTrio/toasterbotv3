@@ -7,7 +7,7 @@ import { Game, ToasterBot } from '../../structures';
 
 class Matching extends Game {
   constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 30 * 1000 });
+    super(client, interaction);
   }
 
   protected async play() : Promise<void | Message | APIMessage> {

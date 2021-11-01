@@ -162,7 +162,7 @@ class MultiplayerEmbed {
         aliases: ['inv', 'add'],
         description: i18n.t('game.multiplayerEmbed.commands.invite.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
-        execute: (message) => {
+        execute: (message) : void => {
           const user = message.mentions.users.first();
           if (this.willOverMaxPlayers()) {
             const failMessage = i18n.t('game.multiplayerEmbed.commands.invite.onFail', {
@@ -185,7 +185,7 @@ class MultiplayerEmbed {
         aliases: ['k', 'remove', 'blacklist'],
         description: i18n.t('game.multiplayerEmbed.commands.kick.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
-        execute: (message) => {
+        execute: (message) : void => {
           const user = message.mentions.users.first();
           const kicked = this.kick(user.id, true);
           if (kicked) {
@@ -202,7 +202,7 @@ class MultiplayerEmbed {
         aliases: ['uk', 'whitelist'],
         description: i18n.t('game.multiplayerEmbed.commands.unkick.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
-        execute: (message) => {
+        execute: (message) : void => {
           const user = message.mentions.users.first();
           const unkicked = this.unkick(user);
           if (unkicked) {
@@ -234,26 +234,33 @@ class MultiplayerEmbed {
 
     if (!commandName) return;
 
-    const command = this.commands.get(commandName) || this.commands.find((cmd : SubCommand) => cmd.aliases.includes(commandName));
+    const command = this.commands.get(commandName)
+      || this.commands.find((cmd : SubCommand) => cmd.aliases.includes(commandName));
     if (command) {
       const cooldownData = this.cooldownHandler.getCooldownData(command, message.member.user);
       if (cooldownData) {
-        return this.renderEmbed(i18n.t('commandOnCooldown', {
+        this.renderEmbed(i18n.t('commandOnCooldown', {
           timeLeft: cooldownData.timeLeft.toFixed(1),
           command,
         }));
+        return;
       }
       command.execute(message, commandArgs);
     }
   }
 
   public awaitResponse() : Promise<boolean> {
-    this.players.set(this.interaction.user.id, ExtendedUser.fromMember(this.interaction.user, this.interaction.member as GuildMember));
+    this.players.set(
+      this.interaction.user.id,
+      ExtendedUser.fromMember(this.interaction.user, this.interaction.member as GuildMember),
+    );
 
     this.initCommands();
     this.renderEmbed();
 
-    const buttonFilter = (btnInteraction: ButtonInteraction) => !this.kickedUsers.includes(btnInteraction.user.id) && !btnInteraction.user.bot;
+    const buttonFilter = (btnInteraction: ButtonInteraction) => !this.kickedUsers.includes(
+      btnInteraction.user.id,
+    ) && !btnInteraction.user.bot;
 
     const messageFilter = (message : Message) => message.member.id === this.interaction.user.id;
 
@@ -325,6 +332,11 @@ class MultiplayerEmbed {
               this.renderEmbed(endMessage);
               stop(false);
             }
+            break;
+          }
+
+          default: {
+            stop(false);
           }
         }
       });

@@ -35,7 +35,7 @@ export default {
         invite: {
           description: 'Automatically add a player to the game',
           onSuccess: '`Invited {{user}}`',
-          onFail: '`Could not invite ${user} due to max player limit`',
+          onFail: '`Could not invite {{user}} due to max player limit`',
         },
         kick: {
           description: 'Kick a player out of the game',

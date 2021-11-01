@@ -73,9 +73,6 @@ class Duel extends Game {
         new DuelPlayer(
           player,
           {
-            nickname: player.nickname,
-          },
-          {
             swords: this.startingSwords,
             spells: this.startingSpells,
           },
@@ -141,7 +138,7 @@ class Duel extends Game {
         const shieldsLeftString = `Shields Left: **${player.shields}**`;
         const mirrorsLeftString = `Mirrors Left: **${player.mirrors}**`;
         return {
-          name: `${player.nickname} ${choiceString}`,
+          name: `${player.extendedUser.nickname} ${choiceString}`,
           value: stripIndents`
             ${winsString}
             ${hasReloadedString}

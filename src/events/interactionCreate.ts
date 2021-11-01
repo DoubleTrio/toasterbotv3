@@ -19,7 +19,12 @@ class InteractionCreateEvent extends ToasterBotEvent {
       await interaction.deferReply();
       const { commandName } = interaction;
       const command = client.commandHandler.getCommmand(commandName);
-
+      if (!command) {
+        return interaction.followUp({
+          content: i18n.t('commandDoesNotExist'),
+          ephemeral: true,
+        });
+      }
       if (command.ownerOnly && !client.isOwner(interaction.user.id)) {
         return interaction.followUp({
           content: i18n.t('ownerOnlyCommand'),
