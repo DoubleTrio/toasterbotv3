@@ -66,64 +66,6 @@ class Duel extends Game {
     this.setPlayers();
   }
 
-  private setPlayers() {
-    this.players.forEach((player) => {
-      this.playerData.set(
-        player.user.id,
-        new DuelPlayer(
-          player,
-          {
-            swords: this.startingSwords,
-            spells: this.startingSpells,
-          },
-        ),
-      );
-    });
-  }
-
-  private createActionButtonRow() : MessageActionRowOptions {
-    const buttons : MessageButtonOptions[] = [
-      {
-        style: 'SECONDARY',
-        label: '🔫 Reload/Shoot',
-        customId: Item.getId('GUN'),
-        type: 'BUTTON',
-      },
-      {
-        style: 'SECONDARY',
-        label: '⚔️ Sword',
-        customId: Item.getId('SWORD'),
-        type: 'BUTTON',
-      },
-      {
-        style: 'SECONDARY',
-        label: '✨ Spell',
-        customId: Item.getId('SPELL'),
-        type: 'BUTTON',
-      },
-      {
-        style: 'SECONDARY',
-        label: '🛡️ Shield',
-        customId: Item.getId('SHIELD'),
-        type: 'BUTTON',
-      },
-      {
-        style: 'SECONDARY',
-        label: '🪞 Mirror',
-        customId: Item.getId('MIRROR'),
-        type: 'BUTTON',
-      },
-    ];
-    return {
-      type: 'ACTION_ROW',
-      components: buttons,
-    };
-  }
-
-  private allPlayersHasSelected() {
-    return this.playerData.every((player) => player.choice !== null);
-  }
-
   private renderEmbed(message = '** **') {
     const fields : EmbedFieldData[] = [
       ...this.playerData.map((player) : EmbedFieldData => {
@@ -185,6 +127,50 @@ class Duel extends Game {
     this.interaction.editReply({ embeds: [embed], components: this.terminal() ? [] : [this.createActionButtonRow()] });
   }
 
+  private async awaitChoices() : Promise<void> {
+    const options : InteractionCollectorOptions<ButtonInteraction> = {
+      time: this.timeLimit,
+      filter: (btnInteraction: ButtonInteraction) => this.playerData.has(btnInteraction.user.id),
+      componentType: 'BUTTON',
+    };
+
+    const collector = this.interaction.channel.createMessageComponentCollector(
+      options,
+    );
+
+    return new Promise((resolve) => {
+      collector.on('collect', (btnInteraction: ButtonInteraction) => {
+        btnInteraction.deferUpdate();
+        const player = this.playerData.get(btnInteraction.user.id);
+        player.select(btnInteraction.customId as DuelChoice);
+        if (this.allPlayersHasSelected()) {
+          collector.stop();
+        }
+      });
+
+      collector.on('end', async () => {
+        if (!this.allPlayersHasSelected()) {
+          this.isGameOver = true;
+          const inactivityMessage = i18n.t('playerInactivityMessage', {
+            game: this.interaction.commandName,
+          });
+          this.renderEmbed(inactivityMessage)
+          return resolve();
+        }
+
+        const host = this.playerData.get(this.interaction.user.id);
+        const challenger = this.playerData.get(this.challenger.user.id);
+        host.confirmChoice();
+        challenger.confirmChoice();
+        this.evaluateRound(host, challenger);
+        host.deselect();
+        challenger.deselect();
+        resolve(null);
+      });
+    });
+  }
+
+
   private evaluateWeapon(p1 : DuelPlayer, p2 : DuelPlayer) {
     // if (p1.hasWeapon && p2.hasWeapon) {
     //   if (p1.reloaded && p2.reloaded) return this.renderEmbed('Both player reloaded!')
@@ -219,6 +205,10 @@ class Duel extends Game {
     this.evaluateWeapon(p1, p2);
   }
 
+  private allPlayersHasSelected() {
+    return this.playerData.every((player) => player.choice !== null);
+  }
+
   private restart() {
     this.gameRound += 1;
     this.turn = 1;
@@ -227,45 +217,58 @@ class Duel extends Game {
     });
   }
 
-  private async awaitChoices() {
-    const options : InteractionCollectorOptions<ButtonInteraction> = {
-      time: this.timeLimit,
-      filter: (btnInteraction: ButtonInteraction) => this.playerData.has(btnInteraction.user.id),
-      componentType: 'BUTTON',
-    };
-
-    const collector = this.interaction.channel.createMessageComponentCollector(
-      options,
-    );
-
-    return new Promise((resolve) => {
-      collector.on('collect', (btnInteraction: ButtonInteraction) => {
-        btnInteraction.deferUpdate();
-        const player = this.playerData.get(btnInteraction.user.id);
-        player.select(btnInteraction.customId as DuelChoice);
-        if (this.allPlayersHasSelected()) {
-          collector.stop();
-        }
-      });
-
-      collector.on('end', async () => {
-        if (!this.allPlayersHasSelected()) {
-          this.isGameOver = true;
-          return resolve(this.renderEmbed(i18n.t('playerInactivityMessage', {
-            gameName: i18n.t('duel.name'),
-          })));
-        }
-
-        const host = this.playerData.get(this.interaction.user.id);
-        const challenger = this.playerData.get(this.challenger.user.id);
-        host.confirmChoice();
-        challenger.confirmChoice();
-        this.evaluateRound(host, challenger);
-        host.deselect();
-        challenger.deselect();
-        resolve(null);
-      });
+  private setPlayers() {
+    this.players.forEach((player) => {
+      this.playerData.set(
+        player.user.id,
+        new DuelPlayer(
+          player,
+          {
+            swords: this.startingSwords,
+            spells: this.startingSpells,
+          },
+        ),
+      );
     });
+  }
+
+  private createActionButtonRow() : MessageActionRowOptions {
+    const buttons : MessageButtonOptions[] = [
+      {
+        style: 'SECONDARY',
+        label: '🔫 Reload/Shoot',
+        customId: Item.getId('GUN'),
+        type: 'BUTTON',
+      },
+      {
+        style: 'SECONDARY',
+        label: '⚔️ Sword',
+        customId: Item.getId('SWORD'),
+        type: 'BUTTON',
+      },
+      {
+        style: 'SECONDARY',
+        label: '✨ Spell',
+        customId: Item.getId('SPELL'),
+        type: 'BUTTON',
+      },
+      {
+        style: 'SECONDARY',
+        label: '🛡️ Shield',
+        customId: Item.getId('SHIELD'),
+        type: 'BUTTON',
+      },
+      {
+        style: 'SECONDARY',
+        label: '🪞 Mirror',
+        customId: Item.getId('MIRROR'),
+        type: 'BUTTON',
+      },
+    ];
+    return {
+      type: 'ACTION_ROW',
+      components: buttons,
+    };
   }
 }
 

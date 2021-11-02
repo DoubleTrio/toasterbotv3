@@ -334,7 +334,7 @@ class MultiplayerEmbed {
             if (this.isHost(userId)) {
               const endMessage = i18n.t('game.multiplayerEmbed.btnCommandOnEnd', {
                 nickname: this.players.get(this.interaction.user.id).nickname,
-                gameName: i18n.t(`${this.interaction.commandName}.name`),
+                game: this.interaction.commandName,
               });
               this.renderEmbed(endMessage);
               stop(false);

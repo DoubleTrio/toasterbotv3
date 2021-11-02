@@ -229,29 +229,13 @@ class Mastermind extends Game {
         if (!flag && !hasQuitted) {
           this.hasEnded = true;
           const gameInactivityMessage = i18n.t('game.inactivityMessage', {
-            gameName: i18n.t('mastermind.name'),
+            game: this.interaction.commandName,
           });
           this.renderEmbed(gameInactivityMessage);
         }
         resolve();
       });
     });
-  }
-
-  private createQuitActionRow(): MessageActionRowOptions {
-    const buttons: MessageButtonOptions[] = [
-      {
-        style: 'DANGER',
-        label: i18n.t('game.giveUp'),
-        customId: 'GIVE_UP',
-        type: 'BUTTON',
-        disabled: this.turn - 1 === this.maxTurns || this.hasEnded,
-      },
-    ];
-    return {
-      type: 'ACTION_ROW',
-      components: buttons,
-    };
   }
 
   private calculateBullsAndCows(userWord: string): [number, number] {
@@ -302,6 +286,23 @@ class Mastermind extends Game {
   private isSecretWord(userWord: string): boolean {
     return userWord === this.secretWord;
   }
+
+  private createQuitActionRow(): MessageActionRowOptions {
+    const buttons: MessageButtonOptions[] = [
+      {
+        style: 'DANGER',
+        label: i18n.t('game.giveUp'),
+        customId: 'GIVE_UP',
+        type: 'BUTTON',
+        disabled: this.turn - 1 === this.maxTurns || this.hasEnded,
+      },
+    ];
+    return {
+      type: 'ACTION_ROW',
+      components: buttons,
+    };
+  }
+
 }
 
 export default Mastermind;

@@ -16,6 +16,7 @@ import {
   MessageSelectMenu,
 } from 'discord.js';
 import i18n from 'i18next';
+import { resolve } from 'path/posix';
 import { ALPHANUMERIC_TO_EMOJI, EMOJI_TO_ALPHANUMERIC } from '../../constants';
 import { addReactions } from '../../helpers';
 import { Game, ToasterBot } from '../../structures';
@@ -25,6 +26,7 @@ import YahtzeePlayer from './YahtzeePlayer';
 const YAHTZEE_BUTTONS = {
   REROLL: 'REROLL',
   PLAY: 'PLAY',
+  END: 'END',
 } as const;
 
 type YahtzeeButton = keyof typeof YAHTZEE_BUTTONS;
@@ -36,13 +38,12 @@ enum YahtzeeStatus {
 
 const YAHTZEE_REACTIONS = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
 
-const YAHTZEE_GAME_INACTIVITY_MESSAGE = i18n.t('game.inactivityMessage', {
-  gameName: 'Yahtzee',
-});
-
 const YAHTZEE_SELECT_CATEGORY_TEXT = i18n.t('yahtzee.selectCategoryText');
 
 class Yahtzee extends Game {
+
+  private inactivityMessage : string;
+
   private message: Message;
 
   private player = new YahtzeePlayer();
@@ -52,7 +53,7 @@ class Yahtzee extends Game {
   private turn = 1;
 
   constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 60000 });
+    super(client, interaction, { timeLimit: 60 * 1000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
@@ -60,21 +61,19 @@ class Yahtzee extends Game {
     while (!this.terminal()) {
       await this.awaitDiceRolls();
       if (this.hasEnded) {
-        return this.renderEmbed(YAHTZEE_GAME_INACTIVITY_MESSAGE);
+        return;
       }
 
       await this.selectCategory();
       if (this.hasEnded) {
-        return this.renderEmbed(YAHTZEE_GAME_INACTIVITY_MESSAGE);
+        return;
       }
+
+      this.status = YahtzeeStatus.ROLLING;
 
       if (!this.terminal()) {
         this.turn += 1;
         this.player.scoreSheet.reset();
-      }
-
-      this.status = YahtzeeStatus.ROLLING;
-      if (!this.terminal()) {
         this.renderEmbed();
       } else {
         this.renderEmbed(
@@ -87,11 +86,15 @@ class Yahtzee extends Game {
   }
 
   private terminal() {
-    return Object.values(this.player.scoreSheet.categories).every((category) => category.isMarked);
+    return Object.values(this.player.scoreSheet.categories)
+      .every((category) => category.isMarked);
   }
 
   protected async initialize() : Promise<void> {
     this.player.scoreSheet.rerollAll();
+    this.inactivityMessage = i18n.t('game.inactivityMessage', {
+      game: this.interaction.commandName,
+    });
     this.message = await this.interaction.fetchReply() as Message;
     this.renderEmbed();
     addReactions(this.message, YAHTZEE_REACTIONS);
@@ -117,38 +120,56 @@ class Yahtzee extends Game {
     };
 
     return new Promise((resolve) => {
+      buttonCollector.on('collect', async (btnInteraction) => {
+        btnInteraction.deferUpdate();
+        switch (btnInteraction.customId as YahtzeeButton) {
+          case 'REROLL': {
+            const m = btnInteraction.message as Message;
+            const message = await m.fetch();
+            for (const reaction of message.reactions.cache.values()) {
+              const hasUser = await this.reactionHasUser(reaction);
+              const emojiName = reaction.emoji.name;
+              if (hasUser) {
+                const diceNumber = EMOJI_TO_ALPHANUMERIC[emojiName];
+                this.player.keepRoll(diceNumber as number);
+              }
+            }
+  
+            const rerollList = this.player.getRerollList();
+            this.player.scoreSheet.reroll(rerollList);
+            if (!this.player.canReroll) {
+              endTurn();
+            } else {
+              this.renderEmbed();
+            }
+          }
+          break;
+        case 'PLAY': {
+          endTurn();
+          break;
+        }
+
+        case 'END': {
+          const endMessage = i18n.t('yahtzee.endGameMessage', {
+            points: this.player.scoreSheet.totalScore,
+          });
+          this.renderEmbed(endMessage);
+          this.hasEnded = true;
+          buttonCollector.stop();
+          break;
+        }
+
+        default:
+          buttonCollector.stop();
+        }
+      });
+
       buttonCollector.on('end', (collected) => {
         if (!collected.size) {
           this.hasEnded = true;
+          this.renderEmbed(this.inactivityMessage);
         }
         resolve();
-      });
-
-      buttonCollector.on('collect', async (btnInteraction) => {
-        btnInteraction.deferUpdate();
-        const customId = btnInteraction.customId as YahtzeeButton;
-        if (customId === 'REROLL') {
-          const m = btnInteraction.message as Message;
-          const message = await m.fetch();
-          for (const reaction of message.reactions.cache.values()) {
-            const hasUser = await this.reactionHasUser(reaction);
-            const emojiName = reaction.emoji.name;
-            if (hasUser) {
-              const diceNumber = EMOJI_TO_ALPHANUMERIC[emojiName];
-              this.player.keepRoll(diceNumber as number);
-            }
-          }
-
-          const rerollList = this.player.getRerollList();
-          this.player.scoreSheet.reroll(rerollList);
-          if (!this.player.canReroll) {
-            endTurn();
-          } else {
-            this.renderEmbed();
-          }
-        } else if (customId === 'PLAY') {
-          endTurn();
-        }
       });
     });
   }
@@ -164,19 +185,25 @@ class Yahtzee extends Game {
       max: 1,
     });
 
+    const stop = () => {
+      resolve();
+      collector.stop();
+    }
+    
     return new Promise((resolve) => {
       collector.on('collect', (menuInteraction: SelectMenuInteraction) => {
         menuInteraction.deferUpdate();
         const [categoryId] = menuInteraction.values;
         this.player.scoreSheet.selectCategory(categoryId);
-        return resolve();
+        stop()
       });
 
       collector.on('end', (collected) => {
         if (!collected.size) {
           this.hasEnded = true;
-          return resolve();
+          this.renderEmbed(this.inactivityMessage);
         }
+        resolve();
       });
     });
   }
@@ -318,6 +345,12 @@ class Yahtzee extends Game {
         style: 'PRIMARY',
         label: i18n.t('yahtzee.playButtonText'),
         customId: YAHTZEE_BUTTONS.PLAY,
+        type: 'BUTTON',
+      },
+      {
+        style: 'DANGER',
+        label: i18n.t('game.multiplayerEmbed.btnEndGameText'),
+        customId: YAHTZEE_BUTTONS.END,
         type: 'BUTTON',
       },
     ];

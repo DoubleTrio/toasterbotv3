@@ -183,12 +183,37 @@ class Minesweeper extends Game {
     this.logsMessage = await this.renderEmbed(generationText) as Message;
   }
 
-  private inRevealed(row : number, column : number) {
-    for (const pos of this.revealedPositions) {
-      if (pos[0] == row && pos[1] === column) {
-        return true;
-      }
+  private renderEmbed(message = '** **') : Promise<APIMessage | Message> {
+    const embed : MessageEmbedOptions = {
+      color: this.client.colors.primary,
+      fields: [
+        {
+          name: `**${i18n.t('game.logs')}**`,
+          value: message,
+        },
+      ],
+      footer: {
+        text: i18n.t('timeLimitText', {
+          timeLimit: this.timeLimit / 1000,
+          iconURL: this.interaction.user.avatarURL(),
+        }),
+      },
+      timestamp: Date.now(),
+    };
+
+    if (this.logsMessage) {
+      return this.logsMessage.edit({
+        embeds: [embed],
+        components: [createMinesweeperActionRow(this.hasEnded)],
+      });
     }
+
+    return this.interaction.channel.send(
+      {
+        embeds: [embed],
+        components: [createMinesweeperActionRow(this.hasEnded)],
+      },
+    );
   }
 
   private async renderBoard(withSpoiler = true) : Promise<APIMessage | Message> {
@@ -228,90 +253,7 @@ class Minesweeper extends Game {
       embeds: [embed],
     });
   }
-
-  private renderEmbed(message = '** **') : Promise<APIMessage | Message> {
-    const embed : MessageEmbedOptions = {
-      color: this.client.colors.primary,
-      fields: [
-        {
-          name: `**${i18n.t('game.logs')}**`,
-          value: message,
-        },
-      ],
-      footer: {
-        text: i18n.t('timeLimitText', {
-          timeLimit: this.timeLimit / 1000,
-          iconURL: this.interaction.user.avatarURL(),
-        }),
-      },
-      timestamp: Date.now(),
-    };
-
-    if (this.logsMessage) {
-      return this.logsMessage.edit({
-        embeds: [embed],
-        components: [createMinesweeperActionRow(this.hasEnded)],
-      });
-    }
-
-    return this.interaction.channel.send(
-      {
-        embeds: [embed],
-        components: [createMinesweeperActionRow(this.hasEnded)],
-      },
-    );
-  }
-
-  private findLargestSafeRegion() : Positions {
-    let bestPositions : Positions = [];
-    let localPositions : Positions = [];
-    const explored : Explored = {};
-
-    const rows = this.board.length;
-    const columns = this.board[0].length;
-
-    for (let i = 0; i < rows; i++) {
-      for (let j = 0; j < columns; j++) {
-        if (explored[i.toString() + j] || this.board[i][j] !== 0) {
-          continue;
-        }
-
-        dfs(this.board, i, j);
-
-        if (bestPositions.length < localPositions.length) {
-          bestPositions = _.cloneDeep(localPositions);
-        }
-        localPositions = [];
-      }
-    }
-
-    function dfs(board : Board<number>, r : number, c : number) {
-      if (explored[r.toString() + c]) {
-        return;
-      }
-
-      const spaceIsZero = board[r][c] === 0;
-
-      if (spaceIsZero) {
-        explored[r.toString() + c] = true;
-        localPositions.push([r, c]);
-        if (r >= 1) dfs(board, r - 1, c);
-        if (r + 1 < rows) dfs(board, r + 1, c);
-        if (c >= 1) dfs(board, r, c - 1);
-        if (c + 1 < columns) dfs(board, r, c + 1);
-
-        if (r >= 1 && c >= 1) dfs(board, r - 1, c - 1);
-        if (r >= 1 && c + 1 < columns) dfs(board, r - 1, c + 1);
-        if (r + 1 < rows && c >= 1) dfs(board, r + 1, c - 1);
-        if (r + 1 < rows && c + 1 < columns) dfs(board, r + 1, c + 1);
-      } else {
-        localPositions.push([r, c]);
-      }
-    }
-
-    return bestPositions;
-  }
-
+  
   private async awaitMinesweeperGame() : Promise<void> {
     const buttonOptions : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,
@@ -377,6 +319,64 @@ class Minesweeper extends Game {
         }
       });
     });
+  }
+
+  private findLargestSafeRegion() : Positions {
+    let bestPositions : Positions = [];
+    let localPositions : Positions = [];
+    const explored : Explored = {};
+
+    const rows = this.board.length;
+    const columns = this.board[0].length;
+
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < columns; j++) {
+        if (explored[i.toString() + j] || this.board[i][j] !== 0) {
+          continue;
+        }
+
+        dfs(this.board, i, j);
+
+        if (bestPositions.length < localPositions.length) {
+          bestPositions = _.cloneDeep(localPositions);
+        }
+        localPositions = [];
+      }
+    }
+
+    function dfs(board : Board<number>, r : number, c : number) {
+      if (explored[r.toString() + c]) {
+        return;
+      }
+
+      const spaceIsZero = board[r][c] === 0;
+
+      if (spaceIsZero) {
+        explored[r.toString() + c] = true;
+        localPositions.push([r, c]);
+        if (r >= 1) dfs(board, r - 1, c);
+        if (r + 1 < rows) dfs(board, r + 1, c);
+        if (c >= 1) dfs(board, r, c - 1);
+        if (c + 1 < columns) dfs(board, r, c + 1);
+
+        if (r >= 1 && c >= 1) dfs(board, r - 1, c - 1);
+        if (r >= 1 && c + 1 < columns) dfs(board, r - 1, c + 1);
+        if (r + 1 < rows && c >= 1) dfs(board, r + 1, c - 1);
+        if (r + 1 < rows && c + 1 < columns) dfs(board, r + 1, c + 1);
+      } else {
+        localPositions.push([r, c]);
+      }
+    }
+
+    return bestPositions;
+  }
+
+  private inRevealed(row : number, column : number) {
+    for (const pos of this.revealedPositions) {
+      if (pos[0] == row && pos[1] === column) {
+        return true;
+      }
+    }
   }
 }
 

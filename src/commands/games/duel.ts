@@ -76,6 +76,7 @@ class DuelCommand extends Command {
     const [err] = await to(duel.start());
     if (err) {
       console.log(err);
+      duel.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

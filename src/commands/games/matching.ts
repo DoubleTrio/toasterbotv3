@@ -55,6 +55,7 @@ class MatchingCommand extends Command {
     const [err] = await to(matching.start());
     if (err) {
       console.log(err);
+      matching.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

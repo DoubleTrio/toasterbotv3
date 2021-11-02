@@ -33,6 +33,7 @@ class YahtzeeCommand extends Command {
     const [err] = await to(yahtzee.start());
     if (err) {
       console.log(err);
+      yahtzee.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

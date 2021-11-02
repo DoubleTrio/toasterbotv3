@@ -114,6 +114,7 @@ class TriviaCommand extends Command {
     const [err] = await to(trivia.start());
     if (err) {
       console.log(err);
+      trivia.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

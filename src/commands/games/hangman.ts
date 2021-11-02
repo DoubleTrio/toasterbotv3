@@ -84,6 +84,7 @@ class HangmanCommand extends Command {
     const [err] = await to(hangman.start());
     if (err) {
       console.log(err);
+      hangman.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

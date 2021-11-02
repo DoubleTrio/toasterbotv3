@@ -80,6 +80,8 @@ class BlackjackCommand extends Command {
     const blackjack = new Blackjack(this.client, interaction);
     const [err] = await to(blackjack.start());
     if (err) {
+      console.log(err);
+      blackjack.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

@@ -63,6 +63,7 @@ class MinesweeperCommand extends Command {
     const [err] = await to(minesweeper.start());
     if (err) {
       console.log(err);
+      minesweeper.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

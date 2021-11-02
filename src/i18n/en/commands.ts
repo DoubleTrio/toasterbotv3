@@ -325,6 +325,7 @@ export default {
     categoryTwos: 'Twos',
     categoryThrees: 'Threes',
     categoryThreeOfAKind: 'Three of a Kind',
+    endGameMessage: 'Nicely done! You have ended the game with {{score}} points!',
     playButtonText: '▶️ Play',
     rerollButtonText: '🎲 Reroll',
     rerollsLeft: '**Rerolls Left**',

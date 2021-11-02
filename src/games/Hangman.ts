@@ -52,6 +52,13 @@ class Hangman extends Game {
     }
   }
 
+  private terminal() {
+    return (
+      this.isGameOver()
+      || this.isSecretWordGuessed()
+    );
+  }
+
   protected async initialize() : Promise<void> {
     this.lives = this.getOptionValue<number>('lives') ?? 8;
     this.difficulty = this.getOptionValue<string>('difficulty') as HangmanDifficulty || 'COMMON';
@@ -90,17 +97,6 @@ class Hangman extends Game {
     }
 
     console.log(this.secretWord);
-  }
-
-  private terminal() {
-    return (
-      this.isGameOver()
-      || this.isSecretWordGuessed()
-    );
-  }
-
-  private isGameOver() {
-    return this.lives <= 0;
   }
 
   private renderEmbed(info?: string) {
@@ -148,24 +144,6 @@ class Hangman extends Game {
     return this.interaction.followUp({ embeds: [data] });
   }
 
-  private getDisplay() : string {
-    const display = [];
-    const symbols = [' ', ',', '\'', '-', '+'];
-    for (const letter of this.secretWord) {
-      if (letter === ' ') {
-        display.push('➖ ');
-      } else if (symbols.includes(letter)) {
-        display.push(`${letter} `);
-      } else {
-        display.push(
-          this.lettersGuessed.includes(letter as AlphanumericKey)
-            ? `${ALPHANUMERIC_TO_EMOJI[letter.toLowerCase() as AlphanumericKey]} `
-            : '🔵 ',
-        );
-      }
-    }
-    return display.join('');
-  }
 
   private async awaitUserLetter() : Promise<void> {
     const filter : CollectorFilter<Message[]> = (m: Message): boolean => {
@@ -223,13 +201,36 @@ class Hangman extends Game {
           this.hasEnded = true;
           this.embedColor = this.client.colors.warning;
           const inactivityMessage = i18n.t('game.inactivityMessage', {
-            gameName: i18n.t('hangman.name'),
+            game: this.interaction.commandName,
           });
           this.renderEmbed(inactivityMessage);
         }
-        resolve();
       });
+      resolve();
     });
+  }
+
+  private getDisplay() : string {
+    const display = [];
+    const symbols = [' ', ',', '\'', '-', '+'];
+    for (const letter of this.secretWord) {
+      if (letter === ' ') {
+        display.push('➖ ');
+      } else if (symbols.includes(letter)) {
+        display.push(`${letter} `);
+      } else {
+        display.push(
+          this.lettersGuessed.includes(letter as AlphanumericKey)
+            ? `${ALPHANUMERIC_TO_EMOJI[letter.toLowerCase() as AlphanumericKey]} `
+            : '🔵 ',
+        );
+      }
+    }
+    return display.join('');
+  }
+
+  private isGameOver() {
+    return this.lives <= 0;
   }
 
   private letterInSecretWord(letter: AlphanumericKey) : boolean {

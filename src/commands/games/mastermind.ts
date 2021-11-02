@@ -70,6 +70,7 @@ class MastermindCommand extends Command {
     const [err] = await to(mastermind.start());
     if (err) {
       console.log(err);
+      mastermind.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

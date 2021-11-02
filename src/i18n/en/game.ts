@@ -1,14 +1,15 @@
 export default {
   game: {
     detailsText: 'Game Details',
-    challengeMessage: '{{playerNickname}} has challenged {{otherPlayerNickname}} in {{gameName}}!',
+    challengeMessage: '{{playerNickname}} has challenged {{otherPlayerNickname}} in $t({{game}}.name)!',
     cannotChallengeBot: 'You cannot challenge a bot!',
     cannotChallengeYourself: 'You cannot challenge yourself',
+    cannotHostGame: 'You are already hosting another game in this channel!',
     declineMessage: '**{{nickname}}** has declined or did not the accept the challenge in time',
-    inactivityMessage: '{{gameName}} has ended due to inactivity...',
+    inactivityMessage: '$t({{game}}.name) has ended due to inactivity...',
     firstToWins: 'First to {{wins}} win(s)!',
     giveUp: 'Give Up',
-    playerInactivityMessage: '{{gameName}} because one of the players was inactive',
+    playerInactivityMessage: '$t({{game}}.name) because one of the players was inactive',
     round: 'Round: {{- round}}',
     scores: 'Scores',
     scoreValue: 'Score: {{value}}',
@@ -18,7 +19,7 @@ export default {
     multiplayerEmbed: {
       aliases: '**Aliases** - {{aliasesText}}',
       btnEndGameText: 'End Game',
-      btnCommandOnEnd: '**{{nickname}}** has ended {{gameName}}',
+      btnCommandOnEnd: '**{{nickname}}** has ended $t({{game}}.name)',
       btnCommandOnJoin: '`{{user}} has joined!`',
       btnCommandOnLeave: '`{{user}} has left!`',
       btnJoinText: 'Join',
@@ -30,6 +31,7 @@ export default {
       hostCommands: '**Host Subcommands** (`{{prefix}}`)',
       maxPlayers: '**Max Players**',
       minPlayers: '**Min Players**',
+      title: '{{user.nickname}} has started a game of $t({{game}}.name)!',
       commands: {
         userArg: '@user',
         invite: {

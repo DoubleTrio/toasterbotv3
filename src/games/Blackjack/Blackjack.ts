@@ -277,7 +277,7 @@ class Blackjack extends Game {
         if (!flag) {
           this.hasEnded = true;
           const inactivityMessage = i18n.t('game.inactivityMessage', {
-            gameName: i18n.t('blackjack.name'),
+            game: this.interaction.commandName,
           });
           this.renderBettingEmbed(inactivityMessage);
         }

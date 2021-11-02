@@ -123,7 +123,55 @@ class Trivia extends Game {
     const message = await this.interaction.fetchReply() as Message;
     this.messageId = message.id;
   }
+  
+  private renderEmbed() {
+    const {
+      question,
+      shuffledAnswers,
+      category,
+      difficulty,
+      possibleAnswers,
+      points,
+    } = this.currentQuestion;
 
+    const possibleAnswersText = i18n.t('trivia.possibleAnswersText', {
+      points,
+    });
+
+    const timeLimitText = i18n.t('timeLimitText', {
+      timeLimit: this.timeLimit / 1000,
+    });
+
+    const embed : MessageEmbedOptions = {
+      color: this.embedColor,
+      title: question,
+      fields: [
+        {
+          name: possibleAnswersText,
+          value: shuffledAnswers.map((answer, index) => {
+            let line = `**${possibleAnswers[
+              index
+            ].toUpperCase()}:** *${answer}*`;
+            if (index === shuffledAnswers.length - 1) {
+              line = `${line}\n${BORDER}`;
+            }
+
+            if (index === 0) {
+              line = `${BORDER}\n${line}`;
+            }
+            return line;
+          }).join('\n'),
+        },
+      ],
+      footer: {
+        text: `${category} - ${this.client.capitalize(difficulty)} | ${timeLimitText}`,
+      },
+      timestamp: Date.now(),
+    };
+
+    return this.interaction.editReply({ embeds: [embed], components: [this.renderButtons()] });
+  }
+  
   private async renderScoreEmbed(message: string) {
     const winnersField : EmbedFieldData = {
       name: '** **',
@@ -156,6 +204,75 @@ class Trivia extends Game {
     return this.interaction.editReply({
       embeds: [data],
       components: [],
+    });
+  }
+
+  private async awaitAnswers() {
+    const options : InteractionCollectorOptions<ButtonInteraction> = {
+      time: this.timeLimit,
+      filter: (btnInteraction: ButtonInteraction) => !btnInteraction.user.bot && btnInteraction.message.id === this.messageId,
+      componentType: 'BUTTON',
+    };
+
+    const collector = this.interaction.channel.createMessageComponentCollector(
+      options,
+    );
+
+    return new Promise((resolve) => {
+      collector.on('collect', (btnInteraction: ButtonInteraction) => {
+        btnInteraction.deferUpdate();
+        const { user } = btnInteraction;
+        const answer = btnInteraction.customId as TriviaLetter;
+        const player = this.scoreData.get(user.id);
+        if (player) {
+          player.setAnswer(answer);
+        } else {
+          const newPlayer = new TriviaPlayer(ExtendedUser.fromMember(btnInteraction.user, btnInteraction.member as GuildMember));
+          newPlayer.setAnswer(answer);
+          this.scoreData.set(user.id, newPlayer);
+        }
+      });
+
+      collector.on('end', async (collected) => {
+        if (collected.size === 0) {
+          const inactivityMesage = i18n.t('game.inactivityMessage', {
+            
+          });
+          resolve(this.interaction.followUp(inactivityMesage));
+          this.hasEnded = true;
+        } else {
+          const correctUsers : string[] = [];
+          for (const player of this.scoreData.values()) {
+            if (player.answer === this.currentQuestion.correctAnswer) {
+              correctUsers.push(player.extendedUser.nickname);
+              player.earnPoints(this.currentQuestion.points);
+            }
+          }
+
+          const answerText = i18n.t('trivia.answerText');
+          const questionText = i18n.t('trivia.questionText');
+          const answerString = `\n\n${questionText} *${this.currentQuestion.question}*\n${answerText} *${this.currentQuestion.correctAnswerString}* **(${getLetterLabel(this.currentQuestion.correctAnswer)})**`;
+          if (correctUsers.length) {
+            const winnersString = correctUsers
+              .map((user) => `**${user}**`)
+              .join(', ');
+            const correctUsersText = i18n.t('trivia.correctUsersText', {
+              winners: winnersString,
+            });
+            this.renderScoreEmbed(`${correctUsersText} ${answerString}`);
+          } else {
+            const incorrectText = i18n.t('trivia.incorrectAnswerText');
+            this.renderScoreEmbed(`${incorrectText} ${answerString}`);
+          }
+          for (const player of this.scoreData.values()) {
+            if (player.answer === this.currentQuestion.correctAnswer) {
+              player.removeAnswer();
+            }
+          }
+
+          resolve(null);
+        }
+      });
     });
   }
 
@@ -210,123 +327,6 @@ class Trivia extends Game {
       type: 'ACTION_ROW',
       components: buttons,
     };
-  }
-
-  private async awaitAnswers() {
-    const options : InteractionCollectorOptions<ButtonInteraction> = {
-      time: this.timeLimit,
-      filter: (btnInteraction: ButtonInteraction) => !btnInteraction.user.bot && btnInteraction.message.id === this.messageId,
-      componentType: 'BUTTON',
-    };
-
-    const collector = this.interaction.channel.createMessageComponentCollector(
-      options,
-    );
-
-    return new Promise((resolve) => {
-      collector.on('collect', (btnInteraction: ButtonInteraction) => {
-        btnInteraction.deferUpdate();
-        const { user } = btnInteraction;
-        const answer = btnInteraction.customId as TriviaLetter;
-        const player = this.scoreData.get(user.id);
-        if (player) {
-          player.setAnswer(answer);
-        } else {
-          const newPlayer = new TriviaPlayer(ExtendedUser.fromMember(btnInteraction.user, btnInteraction.member as GuildMember));
-          newPlayer.setAnswer(answer);
-          this.scoreData.set(user.id, newPlayer);
-        }
-      });
-
-      collector.on('end', async (collected) => {
-        if (collected.size === 0) {
-          const inactivityMesage = i18n.t('game.inactivityMessage', {
-            gameName: i18n.t('trivia.name'),
-          });
-          resolve(this.interaction.followUp(inactivityMesage));
-          this.hasEnded = true;
-        } else {
-          const correctUsers : string[] = [];
-          for (const player of this.scoreData.values()) {
-            if (player.answer === this.currentQuestion.correctAnswer) {
-              correctUsers.push(player.extendedUser.nickname);
-              player.earnPoints(this.currentQuestion.points);
-            }
-          }
-
-          const answerText = i18n.t('trivia.answerText');
-          const questionText = i18n.t('trivia.questionText');
-          const answerString = `\n\n${questionText} *${this.currentQuestion.question}*\n${answerText} *${this.currentQuestion.correctAnswerString}* **(${getLetterLabel(this.currentQuestion.correctAnswer)})**`;
-          if (correctUsers.length) {
-            const winnersString = correctUsers
-              .map((user) => `**${user}**`)
-              .join(', ');
-            const correctUsersText = i18n.t('trivia.correctUsersText', {
-              winners: winnersString,
-            });
-            this.renderScoreEmbed(`${correctUsersText} ${answerString}`);
-          } else {
-            const incorrectText = i18n.t('trivia.incorrectAnswerText');
-            this.renderScoreEmbed(`${incorrectText} ${answerString}`);
-          }
-          for (const player of this.scoreData.values()) {
-            if (player.answer === this.currentQuestion.correctAnswer) {
-              player.removeAnswer();
-            }
-          }
-
-          resolve(null);
-        }
-      });
-    });
-  }
-
-  private renderEmbed() {
-    const {
-      question,
-      shuffledAnswers,
-      category,
-      difficulty,
-      possibleAnswers,
-      points,
-    } = this.currentQuestion;
-
-    const possibleAnswersText = i18n.t('trivia.possibleAnswersText', {
-      points,
-    });
-
-    const timeLimitText = i18n.t('timeLimitText', {
-      timeLimit: this.timeLimit / 1000,
-    });
-
-    const embed : MessageEmbedOptions = {
-      color: this.embedColor,
-      title: question,
-      fields: [
-        {
-          name: possibleAnswersText,
-          value: shuffledAnswers.map((answer, index) => {
-            let line = `**${possibleAnswers[
-              index
-            ].toUpperCase()}:** *${answer}*`;
-            if (index === shuffledAnswers.length - 1) {
-              line = `${line}\n${BORDER}`;
-            }
-
-            if (index === 0) {
-              line = `${BORDER}\n${line}`;
-            }
-            return line;
-          }).join('\n'),
-        },
-      ],
-      footer: {
-        text: `${category} - ${this.client.capitalize(difficulty)} | ${timeLimitText}`,
-      },
-      timestamp: Date.now(),
-    };
-
-    return this.interaction.editReply({ embeds: [embed], components: [this.renderButtons()] });
   }
 }
 

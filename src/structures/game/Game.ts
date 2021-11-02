@@ -61,11 +61,18 @@ abstract class Game {
   protected abstract initialize(interaction: CommandInteraction) : void;
 
   public async start() : Promise<Message | APIMessage | void> {
+    this.setChannel();
+    if (this.canPlayGame(this.interaction.user.id)) {
+      this.interaction.followUp(i18n.t('game.cannotHostGame'));
+      return;
+    }
+
     this.addHost();
     const challenger = this.getUserValue('challenger');
     if (challenger) {
       const hasChallenger = await this.checkChallenger(challenger);
       if (!hasChallenger) {
+        this.removeAllPlayers();
         return;
       }
     }
@@ -78,6 +85,7 @@ abstract class Game {
       const maxPlayers = pmax ?? hasChallengerOption ? 2 : 4;
       const hasPlayers = await this.checkMultiplayer(minPlayers, maxPlayers);
       if (!hasPlayers) {
+        this.removeAllPlayers();
         return;
       }
     }
@@ -88,8 +96,19 @@ abstract class Game {
     this.removeAllPlayers();
   }
 
+  public removeAllPlayers() : void {
+    const channelId = this.interaction.channel.id;
+    for (const player of this.players.values()) {
+      Game.players.get(channelId).delete(player.user.id);
+    }
+  }
+
   protected setEmbedColor(color: EmbedColor) : void {
     this.embedColor = color;
+  }
+
+  private canPlayGame(userId : string) : boolean {
+    return Game.players.get(this.interaction.channelId).has(userId);
   }
 
   private addHost() : void {
@@ -99,25 +118,20 @@ abstract class Game {
     this.addPlayer(host);
   }
 
-  private addPlayer(extendUser : ExtendedUser) : void {
-    this.playerCounter += 1;
-    const channelId = this.interaction.channel.id;
-    const userId = extendUser.user.id;
+  private setChannel() {
+    const channelId = this.interaction.channelId;
     if (!Game.players.has(channelId)) {
       const set = new Set<string>();
-      set.add(userId);
       Game.players.set(channelId, set);
-    } else {
-      Game.players.get(channelId).add(userId);
-    }
-    this.players.set(this.playerCounter, extendUser);
+    } 
   }
 
-  private removeAllPlayers() : void {
-    const channelId = this.interaction.channel.id;
-    for (const player of this.players.values()) {
-      Game.players.get(channelId).delete(player.user.id);
-    }
+  private addPlayer(extendUser : ExtendedUser) : void {
+    this.playerCounter += 1;
+    const channelId = this.interaction.channelId;
+    const userId = extendUser.user.id;
+    Game.players.get(channelId).add(userId);
+    this.players.set(this.playerCounter, extendUser);
   }
 
   private findOption(name: string) : CommandInteractionOption {
@@ -125,7 +139,8 @@ abstract class Game {
   }
 
   private hasOption(name : string) : boolean {
-    return this.interaction.command.options.find((val) => val.name === name) !== undefined;
+    const options = this.interaction?.command?.options ?? [];
+    return options.find((val) => val.name === name) !== undefined;
   }
 
   private async checkChallenger(challenger : ExtendedUser) : Promise<boolean> {
@@ -146,7 +161,7 @@ abstract class Game {
     const title = i18n.t('game.challengeMessage', {
       playerNickname: this.players.get(1).nickname,
       otherPlayerNickname: extendedChallenger.nickname,
-      gameName: i18n.t(`${this.interaction.commandName}.name`),
+      game: this.interaction.commandName,
     });
 
     const isChallengeAccepted = await new AcceptEmbed(
@@ -171,14 +186,17 @@ abstract class Game {
   }
 
   private async checkMultiplayer(min : number, max : number) : Promise<boolean> {
-    const gameName = i18n.t(`${this.interaction.commandName}.name`);
+    const embedTitle = i18n.t('game.multiplayerEmbed.title', {
+      user: this.players.get(1),
+      game: this.interaction.commandName,
+    });
 
     const multiplayerEmbed = new MultiplayerEmbed(
       this.client,
       this.interaction,
       {
         color: this.client.colors.primary,
-        title: `${this.players.get(1).nickname} has started ${gameName}! Click join to play!`,
+        title: embedTitle,
       },
       {
         min,
@@ -191,6 +209,7 @@ abstract class Game {
       let index = 1;
       multiplayerEmbed.players.forEach((player) => {
         this.players.set(index, player);
+        Game.players.get(this.interaction.guildId).add(player.user.id);
         index += 1;
       });
     }

@@ -10,6 +10,7 @@ import {
   User,
 } from 'discord.js';
 import i18n from 'i18next';
+import { resolve } from 'path/posix';
 import { EMOJI_TO_ALPHANUMERIC } from '../../constants';
 import { addReactions } from '../../helpers';
 import { Game, ToasterBot, ExtendedUser } from '../../structures';
@@ -48,7 +49,6 @@ class Connect4 extends Game {
 
   protected async play() : Promise<void | Message | APIMessage> {
     await this.initialize();
-    addReactions(this.message, this.reactions);
     const firstPlayer = this.players.get(1);
     const firstPlayerMessage = i18n.t('connect4.turnMessage', {
       token: CONNECT4_TOKENS[(this.turn % 2)],
@@ -75,6 +75,114 @@ class Connect4 extends Game {
     });
     this.reactions = CONNECT4_REACTIONS.slice(0, width);
     this.message = await this.interaction.fetchReply() as Message;
+    addReactions(this.message, this.reactions);
+  }
+
+  private renderEmbed(info = '') {
+    const fields: EmbedFieldData[] = [
+      {
+        name: i18n.t('game.detailsText'),
+        value: this.stringifyBoard(info),
+      },
+    ];
+
+    const titleText = i18n.t('connect4.name');
+    const turnText = i18n.t('game.turn', {
+      turn: `${this.turn}`,
+    });
+
+    const title = `**${titleText} | ${turnText}**`;
+    const embedData : MessageEmbedOptions = {
+      color: this.client.colors.secondary,
+      title,
+      fields,
+      footer: {
+        text: i18n.t('timeLimitText', {
+          timeLimit: this.timeLimit / 1000,
+        }),
+      },
+      timestamp: Date.now(),
+    };
+
+    const payload : WebhookEditMessageOptions = {
+      embeds: [embedData],
+      components: [],
+    };
+
+    return this.interaction.editReply(payload);
+  }
+
+  private async awaitDropTile(player : ExtendedUser, nextPlayer : ExtendedUser) : Promise<void> {
+    const filter: CollectorFilter<[MessageReaction, User]> = (reaction: MessageReaction, user: User) => {
+      const isPlayer = user.id === player.user.id;
+      const isBot = user.bot;
+      const isValid = this.reactions.includes(reaction.emoji.name) && !isBot && isPlayer;
+      return isValid;
+    };
+
+    const collector = this.message.createReactionCollector(
+      {
+        dispose: true,
+        filter,
+        max: 1,
+        time: this.timeLimit,
+      },
+    );
+
+    return new Promise((resolve) => {
+      const stop = () => {
+        resolve();
+        collector.stop();
+      }
+
+      const playerId = (this.turn % this.players.size) + 1;
+      const nextPlayerId = ((this.turn + 1) % this.players.size) + 1;
+      const onReaction = (reaction: MessageReaction) => {
+        const { name } = reaction.emoji;
+        const column = (EMOJI_TO_ALPHANUMERIC[name] as number) - 1;
+        this.dropTile(playerId, column);
+
+        if (this.isColumnFull(column)) {
+          const index = this.reactions.indexOf(name);
+          this.reactions.splice(index, 1);
+        }
+
+        if (this.checkWin(this.board, playerId, column)) {
+          this.hasEnded = true;
+          const winMessage = i18n.t('connect4.winMessage', {
+            token: CONNECT4_TOKENS[playerId],
+            player,
+          });
+          this.renderEmbed(winMessage);
+        } else {
+          const nextPlayerMessage = i18n.t('connect4.turnMessage', {
+            token: CONNECT4_TOKENS[nextPlayerId],
+            player: nextPlayer,
+          });
+          this.renderEmbed(nextPlayerMessage);
+        }
+        stop();
+      };
+
+      collector.on('collect', (reaction) => {
+        onReaction(reaction);
+      });
+
+      collector.on('dispose', (reaction) => {
+        onReaction(reaction);
+      });
+
+      collector.on('end', (reactions) => {
+        if (!reactions.size) {
+          this.hasEnded = true;
+          const inactivityMessage = i18n.t('game.inactivityMessage', {
+            game: this.interaction.commandName,
+          });
+          this.renderEmbed(inactivityMessage);
+        }
+        resolve();
+      });
+    });
   }
 
   private checkWin(board: Board<number>, value: number, column: number) : boolean {
@@ -128,122 +236,6 @@ class Connect4 extends Game {
     );
   }
 
-  private renderEmbed(info = '') {
-    const fields: EmbedFieldData[] = [
-      {
-        name: i18n.t('game.detailsText'),
-        value: this.stringifyBoard(info),
-      },
-    ];
-
-    const titleText = i18n.t('connect4.name');
-    const turnText = i18n.t('game.turn', {
-      turn: `${this.turn}`,
-    });
-
-    const title = `**${titleText} | ${turnText}**`;
-    const embedData : MessageEmbedOptions = {
-      color: this.client.colors.secondary,
-      title,
-      fields,
-      footer: {
-        text: i18n.t('timeLimitText', {
-          timeLimit: this.timeLimit / 1000,
-        }),
-      },
-      timestamp: Date.now(),
-    };
-
-    const payload : WebhookEditMessageOptions = {
-      embeds: [embedData],
-      components: [],
-    };
-
-    return this.interaction.editReply(payload);
-  }
-
-  private stringifyBoard(info = '') : string {
-    let boardString = '';
-    for (let row = 0; row < this.board.length; row++) {
-      for (let col = 0; col < this.board[row].length; col++) {
-        const val = this.board[row][col];
-        boardString += `${CONNECT4_TOKENS[val]}`;
-      }
-      boardString += '\n';
-    }
-    boardString += `\n${info}`;
-    return boardString;
-  }
-
-  private async awaitDropTile(player : ExtendedUser, nextPlayer : ExtendedUser) : Promise<void> {
-    const filter: CollectorFilter<[MessageReaction, User]> = (reaction: MessageReaction, user: User) => {
-      const isPlayer = user.id === player.user.id;
-      const isBot = user.bot;
-      const isValid = this.reactions.includes(reaction.emoji.name) && !isBot && isPlayer;
-      return isValid;
-    };
-
-    const collector = this.message.createReactionCollector(
-      {
-        dispose: true,
-        filter,
-        max: 1,
-        time: this.timeLimit,
-      },
-    );
-
-    return new Promise((resolve) => {
-      const playerId = (this.turn % this.players.size) + 1;
-      const nextPlayerId = ((this.turn + 1) % this.players.size) + 1;
-      const onReaction = (reaction: MessageReaction) => {
-        const { name } = reaction.emoji;
-        const column = (EMOJI_TO_ALPHANUMERIC[name] as number) - 1;
-        this.dropTile(playerId, column);
-
-        if (this.isColumnFull(column)) {
-          const index = this.reactions.indexOf(name);
-          this.reactions.splice(index, 1);
-        }
-
-        if (this.checkWin(this.board, playerId, column)) {
-          this.hasEnded = true;
-          const winMessage = i18n.t('connect4.winMessage', {
-            token: CONNECT4_TOKENS[playerId],
-            player,
-          });
-
-          this.renderEmbed(winMessage);
-        } else {
-          const nextPlayerMessage = i18n.t('connect4.turnMessage', {
-            token: CONNECT4_TOKENS[nextPlayerId],
-            player: nextPlayer,
-          });
-          this.renderEmbed(nextPlayerMessage);
-        }
-
-        return resolve();
-      };
-
-      collector.on('collect', (reaction) => {
-        onReaction(reaction);
-      });
-
-      collector.on('dispose', (reaction) => {
-        onReaction(reaction);
-      });
-
-      collector.on('end', (reactions) => {
-        if (!reactions.size) {
-          this.hasEnded = true;
-          this.renderEmbed(i18n.t('game.inactivityMessage', {
-            gameName: i18n.t('connect4.name'),
-          }));
-          resolve();
-        }
-      });
-    });
-  }
-
   private dropTile(val: number, column: number) : void {
     const size = this.board.length - 1;
     for (let i = size; i >= 0; i--) {
@@ -260,6 +252,19 @@ class Connect4 extends Game {
     }
     return false;
   };
+
+  private stringifyBoard(info = '') : string {
+    let boardString = '';
+    for (let row = 0; row < this.board.length; row++) {
+      for (let col = 0; col < this.board[row].length; col++) {
+        const val = this.board[row][col];
+        boardString += `${CONNECT4_TOKENS[val]}`;
+      }
+      boardString += '\n';
+    }
+    boardString += `\n${info}`;
+    return boardString;
+  }
 }
 
 export default Connect4;

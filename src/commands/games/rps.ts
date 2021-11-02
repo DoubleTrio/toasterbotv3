@@ -65,6 +65,7 @@ class RPSCommand extends Command {
     const [err] = await to(rps.start());
     if (err) {
       console.log(err);
+      rps.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

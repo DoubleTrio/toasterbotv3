@@ -91,6 +91,7 @@ class ScrabbleCommand extends Command {
     const [err] = await to(scrabble.start());
     if (err) {
       console.log(err);
+      scrabble.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

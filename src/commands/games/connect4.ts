@@ -68,6 +68,7 @@ class Connect4Command extends Command {
     const [err] = await to(connect4.start());
     if (err) {
       console.log(err);
+      connect4.removeAllPlayers();
       this.client.logError(this, err);
     }
   }

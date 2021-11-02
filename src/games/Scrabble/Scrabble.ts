@@ -274,8 +274,9 @@ class Scrabble extends Game {
     if (!messages.size) {
       this.hasEnded = true;
       const inactivityMessage = i18n.t('game.inactivityMessage', {
-        gameName: i18n.t('scrabble.name'),
+        game: this.interaction.commandName,
       });
+
       this.interaction.followUp(inactivityMessage);
       return;
     }
