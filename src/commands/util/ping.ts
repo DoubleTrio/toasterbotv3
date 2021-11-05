@@ -2,13 +2,14 @@ import { APIMessage } from 'discord-api-types';
 import { CommandInteraction, Message } from 'discord.js';
 import { Command, CommandInfo, ToasterBot } from '../../structures';
 
-class Ping extends Command {
+class PingCommand extends Command {
   constructor(client: ToasterBot, info: CommandInfo) {
     super(client,
       info, {
         name: 'ping',
-        enabled: false,
+        enabled: true,
         aliases: ['pong'],
+        cooldown: 10 * 1000,
       });
   }
 
@@ -17,4 +18,4 @@ class Ping extends Command {
   }
 }
 
-export default Ping;
+export default PingCommand;

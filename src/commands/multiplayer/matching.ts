@@ -51,7 +51,11 @@ class MatchingCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const matching = new Matching(this.client, interaction);
+    const matching = new Matching({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(matching.start());
     if (err) {
       console.log(err);

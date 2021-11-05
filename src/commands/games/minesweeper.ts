@@ -59,7 +59,11 @@ class MinesweeperCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const minesweeper = new Minesweeper(this.client, interaction);
+    const minesweeper = new Minesweeper({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(minesweeper.start());
     if (err) {
       console.log(err);

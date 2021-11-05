@@ -1,7 +1,6 @@
 import { APIMessage } from 'discord-api-types';
 import {
   ButtonInteraction,
-  CommandInteraction,
   InteractionCollectorOptions,
   Message,
   MessageActionRowOptions,
@@ -11,7 +10,7 @@ import {
 import _ = require('lodash');
 import i18n from 'i18next';
 import { ALPHANUMERIC_TO_EMOJI } from '../constants';
-import { Game, ToasterBot } from '../structures';
+import { Game, GameConfig } from '../structures';
 import { Board } from '../types';
 
 const MINEWEEPER_BUTTONS = {
@@ -79,8 +78,8 @@ class Minesweeper extends Game {
 
   private logsMessage : Message;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 180 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 180 * 1000 });
   }
 
   protected async play(): Promise<void | Message | APIMessage> {
@@ -253,7 +252,7 @@ class Minesweeper extends Game {
       embeds: [embed],
     });
   }
-  
+
   private async awaitMinesweeperGame() : Promise<void> {
     const buttonOptions : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,

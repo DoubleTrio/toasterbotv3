@@ -64,7 +64,11 @@ class Connect4Command extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const connect4 = new Connect4(this.client, interaction);
+    const connect4 = new Connect4({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(connect4.start());
     if (err) {
       console.log(err);

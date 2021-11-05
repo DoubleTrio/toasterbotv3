@@ -87,7 +87,11 @@ class ScrabbleCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const scrabble = new Scrabble(this.client, interaction);
+    const scrabble = new Scrabble({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(scrabble.start());
     if (err) {
       console.log(err);

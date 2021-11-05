@@ -1,5 +1,7 @@
 import i18next from 'i18next/index';
-import { general, game, commands } from '../../i18n/en';
+import {
+  commands, game, general, group,
+} from '../../i18n/en';
 
 import { ToasterBot } from '..';
 
@@ -26,6 +28,7 @@ class InternalizationHandler {
             ...commands,
             ...general,
             ...game,
+            ...group,
           },
         },
       },

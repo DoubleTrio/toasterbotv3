@@ -1,6 +1,6 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction, CollectorFilter, Message, AwaitMessagesOptions, MessageEmbedOptions,
+  CollectorFilter, Message, AwaitMessagesOptions, MessageEmbedOptions,
 } from 'discord.js';
 import _ = require('lodash');
 import i18n from 'i18next';
@@ -8,7 +8,7 @@ import axios from 'axios';
 import {
   ALL_WORDS, AlphanumericKey, ALPHANUMERIC_TO_EMOJI, COMMON_WORDS,
 } from '../constants';
-import { Game, ToasterBot } from '../structures';
+import { Game, GameConfig } from '../structures';
 
 type HangmanDifficulty = 'COMMON' | 'WORDNIK' | 'ALL';
 
@@ -34,8 +34,8 @@ class Hangman extends Game {
 
   private secretWord: string;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 30 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 60 * 1000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
@@ -144,7 +144,6 @@ class Hangman extends Game {
     return this.interaction.followUp({ embeds: [data] });
   }
 
-
   private async awaitUserLetter() : Promise<void> {
     const filter : CollectorFilter<Message[]> = (m: Message): boolean => {
       const { content } = m;
@@ -200,10 +199,7 @@ class Hangman extends Game {
         if (!flag) {
           this.hasEnded = true;
           this.embedColor = this.client.colors.warning;
-          const inactivityMessage = i18n.t('game.inactivityMessage', {
-            game: this.interaction.commandName,
-          });
-          this.renderEmbed(inactivityMessage);
+          this.renderEmbed(this.inactivityMessage);
         }
       });
       resolve();

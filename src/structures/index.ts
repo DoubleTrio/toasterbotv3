@@ -5,6 +5,7 @@ export {
   Game,
   Point,
   ExtendedUser,
+  GameConfig,
   Card,
   CardConfig,
   CardValue,

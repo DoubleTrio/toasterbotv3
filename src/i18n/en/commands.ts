@@ -129,7 +129,6 @@ export default {
     name: 'Help',
     description: 'Returns a list of commands or more details about a command',
     extendedDescription: 'Ah yes, use the help command to find what the help command does',
-
     aliasesName: 'Aliases',
     categoryOptionDescription: 'Commands from the {{group}} category',
     categoryPlaceholder: 'Select a category',
@@ -137,6 +136,8 @@ export default {
     commandTitle: 'Commands',
     descriptionName: 'Description',
     guildOnlyCommandFooter: 'Guild Only Command',
+    groupAll: 'All',
+    groupMisc: 'Misc',
     infoName: 'Help Info',
     infoValue: stripIndent`
 			{{- required, codeBlock}} - Required arguments
@@ -144,7 +145,6 @@ export default {
 			\`\`/help [command]\`\` - Get more details about the command
   	`,
     noCommandFound: 'No command found',
-    seeAllCommands: 'See all commands',
     userPermissionsRequiredName: 'User Permission Required',
   },
   mastermind: {
@@ -199,6 +199,12 @@ export default {
     name: 'Ping',
     description: 'Replies with the bot ping test',
     extendedDescription: '🏓 Ping-pong',
+  },
+  refresh: {
+    name: 'Refresh',
+    description: 'Changes the cooldown rate for users to start/join a game',
+    extendedDescription: 'The rate should be in seconds, otherwise default to the initial rate',
+    refreshMessage: 'The reset rate has been set to **{{rate}}** seconds!',
   },
   rps: {
     name: 'RPS',
@@ -325,7 +331,7 @@ export default {
     categoryTwos: 'Twos',
     categoryThrees: 'Threes',
     categoryThreeOfAKind: 'Three of a Kind',
-    endGameMessage: 'Nicely done! You have ended the game with {{score}} points!',
+    endGameMessage: '**Nicely done!** You have ended the game with **{{score}}** points!',
     playButtonText: '▶️ Play',
     rerollButtonText: '🎲 Reroll',
     rerollsLeft: '**Rerolls Left**',
@@ -334,6 +340,7 @@ export default {
     totalPoints: '**Total Points**',
     winMessage: '**Nicely done! You have achieved a score of {{score}}!**',
     upperBonus: '**Upper Bonus - Total of Categories 1-6** {{emoji}}',
+    upperBonusFormat: '({{upperScore}}/{{upperRequiredPoints}}) (+{{upperBonus}})',
     yourRolls: '**🎲 Your Rolls 🎲**',
   },
 };

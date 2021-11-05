@@ -64,11 +64,10 @@ class AcceptEmbed {
     });
 
     return new Promise((resolve) => {
-
       const stop = (outcome : boolean) => {
         resolve(outcome);
         collector.stop();
-      }
+      };
 
       const collector = this.interaction.channel.createMessageComponentCollector(
         {

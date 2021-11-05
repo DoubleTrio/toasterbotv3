@@ -29,7 +29,11 @@ class YahtzeeCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const yahtzee = new Yahtzee(this.client, interaction);
+    const yahtzee = new Yahtzee({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(yahtzee.start());
     if (err) {
       console.log(err);

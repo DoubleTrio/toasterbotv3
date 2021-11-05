@@ -4,7 +4,7 @@ export default {
     challengeMessage: '{{playerNickname}} has challenged {{otherPlayerNickname}} in $t({{game}}.name)!',
     cannotChallengeBot: 'You cannot challenge a bot!',
     cannotChallengeYourself: 'You cannot challenge yourself',
-    cannotHostGame: 'You are already hosting another game in this channel!',
+    cannotHostGame: 'You are already hosting/playing another game in this channel!',
     declineMessage: '**{{nickname}}** has declined or did not the accept the challenge in time',
     inactivityMessage: '$t({{game}}.name) has ended due to inactivity...',
     firstToWins: 'First to {{wins}} win(s)!',

@@ -18,6 +18,7 @@ interface MultiplayerEmbedConfig {
   timeLimit?: number;
   min: number;
   max: number;
+  name: string;
 }
 
 interface SubCommand {
@@ -49,21 +50,25 @@ class MultiplayerEmbed {
 
   private commands = new Collection<string, SubCommand>();
 
-  private endText = i18n.t('game.multiplayerEmbed.btnEndGameText');
+  private embedOptions: MessageEmbedOptions;
 
-  private startText = i18n.t('game.multiplayerEmbed.btnStartGameText');
+  private endText = i18n.t('game.multiplayerEmbed.btnEndGameText');
 
   private joinText = i18n.t('game.multiplayerEmbed.btnJoinText');
 
   private leaveText = i18n.t('game.multiplayerEmbed.btnLeaveText');
 
-  private embedOptions: MessageEmbedOptions;
+  private startText = i18n.t('game.multiplayerEmbed.btnStartGameText');
 
   private kickedUsers: string[] = [];
 
   private max : number;
 
+  private messageId : string;
+
   private min : number;
+
+  private name : string;
 
   private timeLimit: number;
 
@@ -71,16 +76,14 @@ class MultiplayerEmbed {
     client : ToasterBot,
     interaction: CommandInteraction,
     embedOptions: MessageEmbedOptions,
-    options: MultiplayerEmbedConfig = {
-      min: 2,
-      max: 4,
-    },
+    options: MultiplayerEmbedConfig,
   ) {
     this.client = client;
     this.embedOptions = embedOptions;
     this.interaction = interaction;
     this.max = options.max;
     this.min = options.min;
+    this.name = options.name;
     this.timeLimit = options.timeLimit || 120 * 1000;
   }
 
@@ -256,7 +259,10 @@ class MultiplayerEmbed {
     }
   }
 
-  public awaitResponse() : Promise<boolean> {
+  public async awaitResponse() : Promise<boolean> {
+    const message = await this.interaction.fetchReply();
+    this.messageId = message.id;
+
     this.players.set(
       this.interaction.user.id,
       ExtendedUser.fromMember(this.interaction.user, this.interaction.member as GuildMember),
@@ -267,7 +273,8 @@ class MultiplayerEmbed {
 
     const buttonFilter = (btnInteraction: ButtonInteraction) => !this.kickedUsers.includes(
       btnInteraction.user.id,
-    ) && !btnInteraction.user.bot;
+    ) && !btnInteraction.user.bot
+      && btnInteraction.message.id === this.messageId;
 
     const messageFilter = (message : Message) => message.member.id === this.interaction.user.id;
 
@@ -334,7 +341,7 @@ class MultiplayerEmbed {
             if (this.isHost(userId)) {
               const endMessage = i18n.t('game.multiplayerEmbed.btnCommandOnEnd', {
                 nickname: this.players.get(this.interaction.user.id).nickname,
-                game: this.interaction.commandName,
+                game: this.name,
               });
               this.renderEmbed(endMessage);
               stop(false);

@@ -11,6 +11,7 @@ export default {
   notAvailableShort: 'NA',
   ownerOnlyCommand: 'Only owners can use this command',
   paginatedEmbedFooter: '$t(timeLimitText, { "timeLimitText": {{timeLimit}} }) | $t(requestedByText, { "user": {{user}} )',
+  paginatedEmbedPages: 'Page {{currentPage}}/{{totalPages}}',
   requestedByText: 'Requested by {{user.username}}',
   timeLimitText: 'Action Time Limit: {{timeLimit}} seconds',
 };

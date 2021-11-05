@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   CollectorFilter,
   Message,
   MessageEmbedOptions,
@@ -9,7 +8,7 @@ import {
   EmbedFieldData,
 } from 'discord.js';
 import i18n from 'i18next';
-import { ExtendedUser, Game, ToasterBot } from '../../structures';
+import { ExtendedUser, Game, GameConfig } from '../../structures';
 import ScrabblePlayer from './ScrabblePlayer';
 import ScrabbleLetterSystem from './ScrabbleLetterSystem';
 
@@ -44,8 +43,8 @@ class Scrabble extends Game {
 
   private totalRounds: number;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 30 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 30 * 1000 });
   }
 
   protected async play(): Promise<void | Message | APIMessage> {
@@ -273,11 +272,7 @@ class Scrabble extends Game {
 
     if (!messages.size) {
       this.hasEnded = true;
-      const inactivityMessage = i18n.t('game.inactivityMessage', {
-        game: this.interaction.commandName,
-      });
-
-      this.interaction.followUp(inactivityMessage);
+      this.interaction.followUp(this.inactivityMessage);
       return;
     }
 

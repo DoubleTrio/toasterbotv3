@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   CollectorFilter,
   Message,
   EmbedField,
@@ -13,7 +12,7 @@ import {
 import _ = require('lodash');
 import i18n from 'i18next';
 import { ALL_WORDS, COMMON_WORDS, WORDNIK_WORDS } from '../constants';
-import { Game, ToasterBot } from '../structures';
+import { Game, GameConfig } from '../structures';
 
 type MastermindDifficulty = 'COMMON' | 'WORDNIK' | 'ALL';
 
@@ -53,8 +52,8 @@ class Mastermind extends Game {
 
   private turn = 0;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 600 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 360 * 1000 });
   }
 
   protected async play(): Promise<void | Message | APIMessage> {
@@ -228,10 +227,7 @@ class Mastermind extends Game {
       messageCollector.on('end', () => {
         if (!flag && !hasQuitted) {
           this.hasEnded = true;
-          const gameInactivityMessage = i18n.t('game.inactivityMessage', {
-            game: this.interaction.commandName,
-          });
-          this.renderEmbed(gameInactivityMessage);
+          this.renderEmbed(this.inactivityMessage);
         }
         resolve();
       });
@@ -302,7 +298,6 @@ class Mastermind extends Game {
       components: buttons,
     };
   }
-
 }
 
 export default Mastermind;

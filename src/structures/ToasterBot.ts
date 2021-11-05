@@ -11,6 +11,7 @@ import {
   EventHandler,
   InternalizationHandler,
   Command,
+  Game,
 } from '.';
 
 interface ToasterBotColors {
@@ -28,6 +29,7 @@ interface ToasterBotConfiguration {
   colors?: ToasterBotColors;
   prefix?: string;
   debug?: boolean;
+  playerClearTimerRate? : number;
 }
 
 class ToasterBot extends Client {
@@ -45,6 +47,8 @@ class ToasterBot extends Client {
 
   readonly debug: boolean;
 
+  public playerClearTimerRate : number;
+
   constructor(options: ClientOptions, config: ToasterBotConfiguration) {
     super(options);
     this.commandHandler = config.commandHandler;
@@ -57,8 +61,9 @@ class ToasterBot extends Client {
       error: 0xED4337,
       warning: 0xF4845F,
     };
-    this.prefix = config.prefix || 'tb.';
-    this.debug = config.debug || false;
+    this.prefix = config.prefix ?? 'tb.';
+    this.debug = config.debug ?? false;
+    this.playerClearTimerRate = config.playerClearTimerRate ?? 180 * 1000;
   }
 
   get loggingChannel() : TextChannel {
@@ -73,6 +78,7 @@ class ToasterBot extends Client {
     await this.internalizationHandler.init(this);
     await this.commandHandler.loadCommands(this);
     this.eventHandler.loadEvents(this);
+    Game.startClearTimer(this.playerClearTimerRate);
     return this.login(process.env.TOKEN);
   }
 
@@ -97,6 +103,7 @@ class ToasterBot extends Client {
       description: command.description,
       options: command.options,
     };
+
     const targetGuild = this.guilds.cache.get(guildId);
     const res = await targetGuild.commands.create(applicationCommandData);
     return res;

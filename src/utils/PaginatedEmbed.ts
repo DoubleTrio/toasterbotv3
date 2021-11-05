@@ -10,6 +10,7 @@ import {
   InteractionCollector,
   MessageActionRow,
   SelectMenuInteraction,
+  Message,
 } from 'discord.js';
 import i18n from 'i18next';
 
@@ -55,6 +56,8 @@ class PaginatedEmbed<T> {
 
   private components: MessageActionRow[] | MessageActionRowOptions[];
 
+  private message : Message;
+
   constructor(interaction: CommandInteraction, options: PaginatedEmbedOptions<T>) {
     this.interaction = interaction;
     this.items = options.items.map((item, index) => options.transform(item, index));
@@ -62,20 +65,22 @@ class PaginatedEmbed<T> {
       fields: [],
     };
     this.transform = options.transform;
-    this.perPage = options.perPage || 10;
+    this.perPage = options.perPage ?? 10;
     this.components = options.components || [];
     this.buttonCollectorOptions = options.buttonCollectorOptions || {
-      time: 25000,
-      filter: (btnInteraction) => btnInteraction.user.id === interaction.user.id,
+      time: 25 * 1000,
+      filter: (btnInteraction) => btnInteraction.user.id === interaction.user.id
+        && btnInteraction.message.id === this.message.id,
       componentType: 'BUTTON',
     };
   }
 
   public async create() : Promise<void> {
+    this.message = await this.interaction.fetchReply() as Message;
     this.count = this.items.length;
     this.totalPages = Math.ceil(this.count / this.perPage);
     return new Promise((resolve) => {
-      this.interaction.followUp({
+      this.interaction.editReply({
         embeds: [this.paginatedEmbed(this.items)],
         components: [this.createActionButtonRow(), ...this.components],
       });
@@ -86,15 +91,19 @@ class PaginatedEmbed<T> {
 
       this.collector.on('collect', async (btnInteraction: ButtonInteraction) => {
         this.collector.resetTimer();
-        this.updatePage(btnInteraction.customId as PaginatedCommands);
-        await btnInteraction.update({
-          embeds: [this.paginatedEmbed(this.items)],
-          components: [this.createActionButtonRow(), ...this.components],
-        });
+        const customId = btnInteraction.customId as PaginatedCommands;
+        this.updatePage(customId);
+        if (customId !== 'TRASH') {
+          await btnInteraction.update({
+            embeds: [this.paginatedEmbed(this.items)],
+            components: [this.createActionButtonRow(), ...this.components],
+          });
+        }
       });
 
-      this.collector.on('end', () => {
-        resolve(this.interaction.deleteReply());
+      this.collector.on('end', async () => {
+        this.message.delete();
+        resolve();
       });
     });
   }
@@ -147,11 +156,15 @@ class PaginatedEmbed<T> {
     const endIndex = this.perPage * this.currentPage;
     const start = endIndex - this.perPage;
     const end = endIndex;
-    const pageString = `Page ${this.currentPage}/${this.totalPages}`;
+    const pageText = i18n.t('paginatedEmbedPages', {
+      currentPage: this.currentPage,
+      totalPages: this.totalPages || 1,
+    });
+
     const embedData : MessageEmbedOptions = {
       ...this.embedData,
       footer: this.footer(),
-      title: this.embedData.title ? `${this.embedData.title} | ${pageString}` : pageString,
+      title: this.embedData.title ? `${this.embedData.title} | ${pageText}` : pageText,
       fields: [...this.embedData.fields, ...data.slice(start, end)],
     };
     return embedData;

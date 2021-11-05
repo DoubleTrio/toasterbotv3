@@ -1,9 +1,10 @@
 import { Collection, User } from 'discord.js';
 import { Command } from '..';
 import { SubCommand } from '../../utils';
+import GroupCommand from './GroupCommand';
 
 interface CooldownData {
-  command: Command | SubCommand;
+  command: Command | SubCommand | GroupCommand;
   timeLeft: number;
 }
 

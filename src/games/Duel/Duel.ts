@@ -3,7 +3,6 @@ import { APIMessage } from 'discord-api-types';
 import {
   ButtonInteraction,
   Collection,
-  CommandInteraction,
   EmbedFieldData,
   InteractionCollectorOptions,
   Message,
@@ -12,7 +11,7 @@ import {
   MessageEmbedOptions,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot, ExtendedUser } from '../../structures';
+import { Game, ExtendedUser, GameConfig } from '../../structures';
 import DuelPlayer from './DuelPlayer';
 import { DuelChoice, Item } from './types';
 
@@ -35,8 +34,8 @@ class Duel extends Game {
 
   private gameRound = 1;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction);
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 60 * 1000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
@@ -151,10 +150,7 @@ class Duel extends Game {
       collector.on('end', async () => {
         if (!this.allPlayersHasSelected()) {
           this.isGameOver = true;
-          const inactivityMessage = i18n.t('playerInactivityMessage', {
-            game: this.interaction.commandName,
-          });
-          this.renderEmbed(inactivityMessage)
+          this.renderEmbed(this.playerInactivityMessage);
           return resolve();
         }
 
@@ -169,7 +165,6 @@ class Duel extends Game {
       });
     });
   }
-
 
   private evaluateWeapon(p1 : DuelPlayer, p2 : DuelPlayer) {
     // if (p1.hasWeapon && p2.hasWeapon) {

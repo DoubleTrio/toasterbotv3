@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   Message,
   MessageEmbedOptions,
   EmbedFieldData,
@@ -10,10 +9,9 @@ import {
   User,
 } from 'discord.js';
 import i18n from 'i18next';
-import { resolve } from 'path/posix';
 import { EMOJI_TO_ALPHANUMERIC } from '../../constants';
 import { addReactions } from '../../helpers';
-import { Game, ToasterBot, ExtendedUser } from '../../structures';
+import { Game, ExtendedUser, GameConfig } from '../../structures';
 import { Board } from '../../types';
 
 const CONNECT4_TOKENS = ['⚫', '🔴', '🔵'];
@@ -43,8 +41,8 @@ class Connect4 extends Game {
 
   private turn = 1;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction);
+  constructor(config : GameConfig) {
+    super(config);
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
@@ -133,7 +131,7 @@ class Connect4 extends Game {
       const stop = () => {
         resolve();
         collector.stop();
-      }
+      };
 
       const playerId = (this.turn % this.players.size) + 1;
       const nextPlayerId = ((this.turn + 1) % this.players.size) + 1;
@@ -175,10 +173,7 @@ class Connect4 extends Game {
       collector.on('end', (reactions) => {
         if (!reactions.size) {
           this.hasEnded = true;
-          const inactivityMessage = i18n.t('game.inactivityMessage', {
-            game: this.interaction.commandName,
-          });
-          this.renderEmbed(inactivityMessage);
+          this.renderEmbed(this.inactivityMessage);
         }
         resolve();
       });

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import {
-  CommandInteraction,
   Collection,
   EmbedFieldData,
   MessageEmbedOptions,
@@ -14,7 +13,7 @@ import {
 import he = require('he');
 import i18n from 'i18next';
 import _ = require('lodash');
-import { ExtendedUser, Game, ToasterBot } from '../../structures';
+import { ExtendedUser, Game, GameConfig } from '../../structures';
 import TriviaPlayer from './TriviaPlayer';
 import {
   ModifiedTriviaQuestion,
@@ -95,8 +94,8 @@ class Trivia extends Game {
 
   private totalRounds : number;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 30000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 30 * 1000 });
   }
 
   protected async play() : Promise<void> {
@@ -123,7 +122,7 @@ class Trivia extends Game {
     const message = await this.interaction.fetchReply() as Message;
     this.messageId = message.id;
   }
-  
+
   private renderEmbed() {
     const {
       question,
@@ -171,7 +170,7 @@ class Trivia extends Game {
 
     return this.interaction.editReply({ embeds: [embed], components: [this.renderButtons()] });
   }
-  
+
   private async renderScoreEmbed(message: string) {
     const winnersField : EmbedFieldData = {
       name: '** **',
@@ -207,7 +206,7 @@ class Trivia extends Game {
     });
   }
 
-  private async awaitAnswers() {
+  private async awaitAnswers() : Promise<void> {
     const options : InteractionCollectorOptions<ButtonInteraction> = {
       time: this.timeLimit,
       filter: (btnInteraction: ButtonInteraction) => !btnInteraction.user.bot && btnInteraction.message.id === this.messageId,
@@ -234,11 +233,9 @@ class Trivia extends Game {
       });
 
       collector.on('end', async (collected) => {
-        if (collected.size === 0) {
-          const inactivityMesage = i18n.t('game.inactivityMessage', {
-            
-          });
-          resolve(this.interaction.followUp(inactivityMesage));
+        if (!collected.size) {
+          this.interaction.followUp(this.inactivityMessage);
+          resolve();
           this.hasEnded = true;
         } else {
           const correctUsers : string[] = [];
@@ -270,7 +267,7 @@ class Trivia extends Game {
             }
           }
 
-          resolve(null);
+          resolve();
         }
       });
     });

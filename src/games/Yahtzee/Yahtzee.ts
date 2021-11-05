@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   Message,
   MessageEmbedOptions,
   EmbedFieldData,
@@ -19,7 +18,8 @@ import i18n from 'i18next';
 import { resolve } from 'path/posix';
 import { ALPHANUMERIC_TO_EMOJI, EMOJI_TO_ALPHANUMERIC } from '../../constants';
 import { addReactions } from '../../helpers';
-import { Game, ToasterBot } from '../../structures';
+import { Game } from '../../structures';
+import { GameConfig } from '../../structures/game/Game';
 import YahtzeeCategory from './YahtzeeCategory';
 import YahtzeePlayer from './YahtzeePlayer';
 
@@ -41,9 +41,6 @@ const YAHTZEE_REACTIONS = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣'];
 const YAHTZEE_SELECT_CATEGORY_TEXT = i18n.t('yahtzee.selectCategoryText');
 
 class Yahtzee extends Game {
-
-  private inactivityMessage : string;
-
   private message: Message;
 
   private player = new YahtzeePlayer();
@@ -52,8 +49,8 @@ class Yahtzee extends Game {
 
   private turn = 1;
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 60 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 60 * 1000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
@@ -92,9 +89,6 @@ class Yahtzee extends Game {
 
   protected async initialize() : Promise<void> {
     this.player.scoreSheet.rerollAll();
-    this.inactivityMessage = i18n.t('game.inactivityMessage', {
-      game: this.interaction.commandName,
-    });
     this.message = await this.interaction.fetchReply() as Message;
     this.renderEmbed();
     addReactions(this.message, YAHTZEE_REACTIONS);
@@ -134,7 +128,7 @@ class Yahtzee extends Game {
                 this.player.keepRoll(diceNumber as number);
               }
             }
-  
+
             const rerollList = this.player.getRerollList();
             this.player.scoreSheet.reroll(rerollList);
             if (!this.player.canReroll) {
@@ -143,24 +137,24 @@ class Yahtzee extends Game {
               this.renderEmbed();
             }
           }
-          break;
-        case 'PLAY': {
-          endTurn();
-          break;
-        }
+            break;
+          case 'PLAY': {
+            endTurn();
+            break;
+          }
 
-        case 'END': {
-          const endMessage = i18n.t('yahtzee.endGameMessage', {
-            points: this.player.scoreSheet.totalScore,
-          });
-          this.renderEmbed(endMessage);
-          this.hasEnded = true;
-          buttonCollector.stop();
-          break;
-        }
+          case 'END': {
+            const endMessage = i18n.t('yahtzee.endGameMessage', {
+              score: this.player.scoreSheet.totalScore,
+            });
+            this.renderEmbed(endMessage);
+            this.hasEnded = true;
+            buttonCollector.stop();
+            break;
+          }
 
-        default:
-          buttonCollector.stop();
+          default:
+            buttonCollector.stop();
         }
       });
 
@@ -188,14 +182,14 @@ class Yahtzee extends Game {
     const stop = () => {
       resolve();
       collector.stop();
-    }
-    
+    };
+
     return new Promise((resolve) => {
       collector.on('collect', (menuInteraction: SelectMenuInteraction) => {
         menuInteraction.deferUpdate();
         const [categoryId] = menuInteraction.values;
         this.player.scoreSheet.selectCategory(categoryId);
-        stop()
+        stop();
       });
 
       collector.on('end', (collected) => {
@@ -217,6 +211,8 @@ class Yahtzee extends Game {
       distribution,
       hasUpperBonus,
       upperScore,
+      upperBonus,
+      upperRequiredPoints,
     } = this.player.scoreSheet;
 
     const rollsDisplay = `**${Object.values(rolls)
@@ -256,12 +252,18 @@ class Yahtzee extends Game {
       });
     }
 
+    const upperBonusText = i18n.t('yahtzee.upperBonusFormat', {
+      upperScore,
+      upperRequiredPoints,
+      upperBonus,
+    });
+
     fields.push({
       name: i18n.t('yahtzee.upperBonus', {
         emoji: hasUpperBonus ? '✅' : '❌',
       }),
       value: `${
-        hasUpperBonus ? i18n.t('game.scoreValue', { value: 35 }) : `(${upperScore}/63) (+35)`
+        hasUpperBonus ? i18n.t('game.scoreValue', { value: upperBonus }) : upperBonusText
       }`,
     });
 

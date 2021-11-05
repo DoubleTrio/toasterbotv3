@@ -1,14 +1,21 @@
 import { APIMessage } from 'discord-api-types';
 import {
+  ApplicationCommandOption,
   Collection,
-  CommandInteraction, CommandInteractionOption, GuildMember, Message,
+  CommandInteraction, CommandInteractionOption, GuildMember,
+  Message,
 } from 'discord.js';
 import i18n from 'i18next';
-import { ExtendedUser, ToasterBot } from '..';
+import { Command, ExtendedUser, ToasterBot } from '..';
 import { EmbedColor } from '../../types';
 import { AcceptEmbed, MultiplayerEmbed } from '../../utils';
 
 interface GameConfig {
+  command: Command;
+  interaction: CommandInteraction,
+}
+
+interface GameplayConfig {
   timeLimit: number;
 }
 
@@ -23,25 +30,55 @@ type OptionValue = string | boolean | number;
 abstract class Game {
   static players = new Collection<string, Set<string>>();
 
+  static timer : NodeJS.Timer;
+
+  static clear() : void {
+    Game.players = new Collection<string, Set<string>>();
+  }
+
+  static startClearTimer(ms: number) : void {
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
+
+    this.timer = setInterval(() => {
+      this.clear();
+    }, ms);
+  }
+
   readonly interaction: CommandInteraction;
 
   readonly client: ToasterBot;
 
   protected embedColor: EmbedColor;
 
+  protected inactivityMessage: string;
+
   protected hasEnded = false;
+
+  protected name : string;
+
+  protected playerInactivityMessage: string;
 
   protected timeLimit : number;
 
   protected players = new Collection<number, ExtendedUser>();
 
-  private playerCounter = 0;
+  private options : ApplicationCommandOption[];
 
-  constructor(client: ToasterBot, interaction: CommandInteraction, config : GameConfig = { timeLimit: 30000 }) {
-    this.client = client;
-    this.interaction = interaction;
-    this.embedColor = client.colors.primary;
-    this.timeLimit = config.timeLimit;
+  constructor(config : GameConfig, gameplayConfig : GameplayConfig = { timeLimit: 30 * 1000 }) {
+    this.client = config.command.client;
+    this.options = config.command.options;
+    this.interaction = config.interaction;
+    this.embedColor = config.command.client.colors.primary;
+    this.name = config.interaction.options.getSubcommand();
+    this.inactivityMessage = i18n.t('game.inactivityMessage', {
+      game: this.name,
+    });
+    this.playerInactivityMessage = i18n.t('game.playerInactivityMessage', {
+      game: this.name,
+    });
+    this.timeLimit = gameplayConfig.timeLimit;
   }
 
   static sleep(ms: number) : Promise<void> {
@@ -63,7 +100,10 @@ abstract class Game {
   public async start() : Promise<Message | APIMessage | void> {
     this.setChannel();
     if (this.canPlayGame(this.interaction.user.id)) {
-      this.interaction.followUp(i18n.t('game.cannotHostGame'));
+      this.interaction.followUp({
+        content: i18n.t('game.cannotHostGame'),
+        ephemeral: true,
+      });
       return;
     }
 
@@ -79,7 +119,9 @@ abstract class Game {
 
     const pmin = this.getOptionValue<number>('pmin');
     const pmax = this.getOptionValue<number>('pmax');
+
     const hasChallengerOption = this.hasOption('challenger');
+
     if (pmin || pmax || (hasChallengerOption && !challenger)) {
       const minPlayers = pmin ?? 2;
       const maxPlayers = pmax ?? hasChallengerOption ? 2 : 4;
@@ -93,13 +135,19 @@ abstract class Game {
     if (!this.hasEnded) {
       await this.play();
     }
+
     this.removeAllPlayers();
   }
 
   public removeAllPlayers() : void {
+    this.setChannel();
     const channelId = this.interaction.channel.id;
     for (const player of this.players.values()) {
-      Game.players.get(channelId).delete(player.user.id);
+      const set = Game.players.get(channelId);
+      const playerId = player.user.id;
+      if (set.has(playerId)) {
+        set.delete(player.user.id);
+      }
     }
   }
 
@@ -115,42 +163,51 @@ abstract class Game {
     const { user } = this.interaction;
     const member = this.interaction.member as GuildMember;
     const host = ExtendedUser.fromMember(user, member);
-    this.addPlayer(host);
+    this.addPlayer(host, 1);
   }
 
   private setChannel() {
-    const channelId = this.interaction.channelId;
+    const { channelId } = this.interaction;
     if (!Game.players.has(channelId)) {
-      const set = new Set<string>();
-      Game.players.set(channelId, set);
-    } 
+      const playerSet = new Set<string>();
+      Game.players.set(channelId, playerSet);
+    }
   }
 
-  private addPlayer(extendUser : ExtendedUser) : void {
-    this.playerCounter += 1;
-    const channelId = this.interaction.channelId;
+  private addPlayer(extendUser : ExtendedUser, id : number) : void {
+    const { channelId } = this.interaction;
     const userId = extendUser.user.id;
     Game.players.get(channelId).add(userId);
-    this.players.set(this.playerCounter, extendUser);
+    this.players.set(id, extendUser);
   }
 
   private findOption(name: string) : CommandInteractionOption {
-    return this.interaction.options.data.find((option) => option.name === name);
+    const options = this.interaction.options.data[0]?.options;
+    if (options) {
+      return this.interaction.options.data[0].options.find((option) => option.name === name);
+    }
+
+    return null;
   }
 
   private hasOption(name : string) : boolean {
-    const options = this.interaction?.command?.options ?? [];
-    return options.find((val) => val.name === name) !== undefined;
+    return this.options.find((val) => val.name === name) !== undefined;
   }
 
   private async checkChallenger(challenger : ExtendedUser) : Promise<boolean> {
     if (challenger.user.bot) {
-      this.interaction.followUp(i18n.t('game.cannotChallengeBot'));
+      this.interaction.followUp({
+        content: i18n.t('game.cannotChallengeBot'),
+        ephemeral: true,
+      });
       return false;
     }
 
     if (challenger.user.id === this.interaction.user.id) {
-      this.interaction.followUp(i18n.t('game.cannotChallengeYourself'));
+      this.interaction.followUp({
+        content: i18n.t('game.cannotChallengeYourself'),
+        ephemeral: true,
+      });
       return false;
     }
 
@@ -181,14 +238,14 @@ abstract class Game {
       return false;
     }
 
-    this.addPlayer(extendedChallenger);
+    this.addPlayer(extendedChallenger, 2);
     return true;
   }
 
   private async checkMultiplayer(min : number, max : number) : Promise<boolean> {
     const embedTitle = i18n.t('game.multiplayerEmbed.title', {
       user: this.players.get(1),
-      game: this.interaction.commandName,
+      game: this.name,
     });
 
     const multiplayerEmbed = new MultiplayerEmbed(
@@ -201,15 +258,17 @@ abstract class Game {
       {
         min,
         max,
+        name: this.name,
       },
     );
 
     const canPlay = await multiplayerEmbed.awaitResponse();
     if (canPlay) {
+      this.setChannel();
       let index = 1;
       multiplayerEmbed.players.forEach((player) => {
         this.players.set(index, player);
-        Game.players.get(this.interaction.guildId).add(player.user.id);
+        Game.players.get(this.interaction.channelId).add(player.user.id);
         index += 1;
       });
     }
@@ -232,4 +291,4 @@ abstract class Game {
   }
 }
 
-export { Game, ExtendedUser };
+export { Game, ExtendedUser, GameConfig };

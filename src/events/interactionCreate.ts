@@ -4,6 +4,7 @@ import {
 } from 'discord.js';
 import i18n from 'i18next';
 import { ToasterBot, ToasterBotEvent } from '../structures';
+import GroupCommand from '../structures/handlers/GroupCommand';
 
 class InteractionCreateEvent extends ToasterBotEvent {
   constructor() {
@@ -18,13 +19,18 @@ class InteractionCreateEvent extends ToasterBotEvent {
     if (interaction.isCommand() && !interaction.user.bot) {
       await interaction.deferReply();
       const { commandName } = interaction;
-      const command = client.commandHandler.getCommmand(commandName);
+      let command = client.commandHandler.getCommmand(commandName);
       if (!command) {
         return interaction.followUp({
           content: i18n.t('commandDoesNotExist'),
           ephemeral: true,
         });
       }
+
+      if (command instanceof GroupCommand) {
+        command = command.commands.get(interaction.options.getSubcommand());
+      }
+
       if (command.ownerOnly && !client.isOwner(interaction.user.id)) {
         return interaction.followUp({
           content: i18n.t('ownerOnlyCommand'),

@@ -66,7 +66,11 @@ class MastermindCommand extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction) : Promise<Message | APIMessage | void> {
-    const mastermind = new Mastermind(this.client, interaction);
+    const mastermind = new Mastermind({
+      command: this,
+      interaction,
+    });
+
     const [err] = await to(mastermind.start());
     if (err) {
       console.log(err);

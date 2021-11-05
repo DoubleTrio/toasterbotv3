@@ -124,6 +124,14 @@ class YahtzeeScoreSheet {
     }),
   };
 
+  get upperBonus() : number {
+    return 35;
+  }
+
+  get upperRequiredPoints() : number {
+    return 63;
+  }
+
   get upperScore() : number {
     return this._upperScore;
   }
@@ -168,8 +176,8 @@ class YahtzeeScoreSheet {
     const parsedCategoryId = parseInt(categoryId, 10);
     if (parsedCategoryId >= 1 && parsedCategoryId <= 6) {
       this._upperScore += category.value;
-      if (this._upperScore >= 63 && !this.hasUpperBonus) {
-        this._totalScore += 35;
+      if (this._upperScore >= this.upperRequiredPoints && !this.hasUpperBonus) {
+        this._totalScore += this.upperBonus;
         this._hasUpperBonus = true;
       }
     }

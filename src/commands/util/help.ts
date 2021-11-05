@@ -1,7 +1,6 @@
 import { APIMessage } from 'discord-api-types';
 import {
   CommandInteraction,
-  CommandInteractionOption,
   EmbedField,
   Message,
   MessageActionRow,
@@ -13,9 +12,12 @@ import {
 import i18n from 'i18next';
 import * as _ from 'lodash';
 import { Command, CommandInfo, ToasterBot } from '../../structures';
+import GroupCommand from '../../structures/handlers/GroupCommand';
 import { PaginatedEmbed } from '../../utils';
 
-class Help extends Command {
+class HelpCommand extends Command {
+  private allCommands : Command[] = [];
+
   constructor(client: ToasterBot, info: CommandInfo) {
     super(
       client,
@@ -35,34 +37,49 @@ class Help extends Command {
   }
 
   async runInteraction(interaction: CommandInteraction): Promise<void | Message | APIMessage> {
-    const args = interaction.options.data;
-    const hasCommand = args.length;
-    if (!hasCommand) {
+    if (!this.allCommands.length) {
+      for (const command of this.client.commandHandler.commands.values()) {
+        if (command instanceof GroupCommand) {
+          command.commands.forEach((subCommand) => {
+            this.allCommands.push(subCommand);
+          });
+        } else {
+          this.allCommands.push(command);
+        }
+      }
+    }
+
+    const command = interaction.options.getString('command');
+    if (!command) {
       return this.getAllCommands(interaction);
     }
 
-    return this.getCommand(interaction, args[0]);
+    return this.getCommand(interaction, command);
   }
 
   private getAllCommands(interaction: CommandInteraction) : Promise<void> {
-    const uniqueGroups = _.uniq(
-      this.client.commandHandler.commands.map((command) => command.group),
-    );
+    const all = 'all';
     const allOption: MessageSelectOptionData = {
-      label: 'All',
-      value: 'all',
-      description: i18n.t('help.seeAllCommands'),
+      label: i18n.t('help.groupAll'),
+      value: all,
+      description: i18n.t(`group.${all}`),
     };
 
-    const groupOptions: MessageSelectOptionData[] = uniqueGroups.map((group: string) => ({
-      label: this.client.capitalize(group),
-      value: group,
-      description: i18n.t('help.categoryOptionDescription', {
-        group,
-      }),
-    }));
+    const misc = 'misc';
+    const miscOption: MessageSelectOptionData = {
+      label: i18n.t('help.groupMisc'),
+      value: misc,
+      description: i18n.t(`group.${misc}`),
+    };
 
-    const allGroupOptions = [allOption, ...groupOptions];
+    const groupOptions: MessageSelectOptionData[] = this.client.commandHandler.commands.filter((cmd) => cmd.group !== 'misc')
+      .map((cmd: Command) => ({
+        label: this.client.capitalize(cmd.group),
+        value: cmd.group,
+        description: cmd.description,
+      }));
+
+    const allGroupOptions = [allOption, ...groupOptions, miscOption];
 
     const components = (state: boolean) => new MessageActionRow().addComponents(
       new MessageSelectMenu()
@@ -78,7 +95,7 @@ class Help extends Command {
     const collector = interaction.channel.createMessageComponentCollector({
       filter,
       componentType: 'SELECT_MENU',
-      time: 30000,
+      time: 30 * 1000,
     });
 
     const paginatedEmbed = new PaginatedEmbed<Command>(interaction, {
@@ -99,7 +116,7 @@ class Help extends Command {
         },
       },
       perPage: 10,
-      items: [...this.client.commandHandler.commands.values()],
+      items: [...this.allCommands.values()],
       transform: (command: Command) => ({
         name: `**/${command.name} ${this.formatOptions(command).join(', ')}**`,
         value: command.description,
@@ -113,11 +130,11 @@ class Help extends Command {
       let cmds;
 
       if (group !== 'all') {
-        cmds = this.client.commandHandler.commands.filter(
+        cmds = this.allCommands.filter(
           (command: Command) => command.group === group,
         );
       } else {
-        cmds = this.client.commandHandler.commands;
+        cmds = this.allCommands;
       }
 
       paginatedEmbed.update(menuInteraction, [...cmds.values()]);
@@ -126,10 +143,9 @@ class Help extends Command {
     return paginatedEmbed.create();
   }
 
-  private getCommand(interaction: CommandInteraction, option: CommandInteractionOption)
+  private getCommand(interaction: CommandInteraction, commandName: string)
     : Promise<Message | APIMessage> {
-    const input = option.value as string;
-    const command = this.client.commandHandler.getCommmand(input);
+    const command = this.allCommands.find((cmd) => cmd.name === commandName);
     if (command) {
       const descriptionField : EmbedField = {
         name: `**${i18n.t('help.descriptionName')}**`,
@@ -180,12 +196,11 @@ class Help extends Command {
         fields,
       };
 
-      return interaction.followUp({ embeds: [embed] });
+      return interaction.editReply({ embeds: [embed] });
     }
 
-    return interaction.followUp({
+    return interaction.editReply({
       content: i18n.t('help.noCommandFound'),
-      ephemeral: true,
     });
   }
 
@@ -204,4 +219,4 @@ class Help extends Command {
   }
 }
 
-export default Help;
+export default HelpCommand;

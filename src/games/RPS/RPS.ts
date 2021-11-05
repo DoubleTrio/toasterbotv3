@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   Collection,
   MessageActionRowOptions,
   MessageButtonOptions,
@@ -11,7 +10,7 @@ import {
   Message,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot } from '../../structures';
+import { Game, GameConfig } from '../../structures';
 import RPSPlayer from './RPSPlayer';
 import { RPS_MATCHUPS, RPSChoice } from './types';
 
@@ -24,8 +23,8 @@ class RPS extends Game {
 
   private playerData = new Collection<string, RPSPlayer>();
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 30 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 30 * 1000 });
   }
 
   protected async play() : Promise<void | APIMessage | Message> {
@@ -43,7 +42,7 @@ class RPS extends Game {
   private terminal() : boolean {
     return this.playerData.some((player) => player.wins === this.requiredWins);
   }
-  
+
   protected async initialize() : Promise<void> {
     this.requiredWins = this.getOptionValue<number>('wins') ?? 1;
     this.timeLimit = this.getOptionValue<number>('time') ?? 20000;
@@ -124,9 +123,7 @@ class RPS extends Game {
       collector.on('end', async () => {
         if (!this.allPlayersHasSelected()) {
           this.hasEnded = true;
-          i18n.t('game.playerInactivityMessage', {
-            game: this.interaction.commandName,
-          })
+          this.renderEmbed(this.playerInactivityMessage);
           return resolve();
         }
 

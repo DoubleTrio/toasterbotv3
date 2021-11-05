@@ -1,6 +1,5 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction,
   CollectorFilter,
   Message,
   EmbedField,
@@ -14,7 +13,7 @@ import {
 import i18n from 'i18next';
 import {
   Game,
-  ToasterBot,
+  GameConfig,
 } from '../../structures';
 import BlackjackCard from './BlackjackCard';
 import BlackjackPlayer from './BlackjackPlayer';
@@ -50,8 +49,8 @@ class Blackjack extends Game {
 
   private cards : BlackjackCard[] = [];
 
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction, { timeLimit: 60 * 1000 });
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 30 * 1000 });
   }
 
   protected async play(): Promise<void | Message | APIMessage> {
@@ -276,10 +275,7 @@ class Blackjack extends Game {
       collector.on('end', () => {
         if (!flag) {
           this.hasEnded = true;
-          const inactivityMessage = i18n.t('game.inactivityMessage', {
-            game: this.interaction.commandName,
-          });
-          this.renderBettingEmbed(inactivityMessage);
+          this.renderBettingEmbed(this.inactivityMessage);
         }
         resolve();
       });

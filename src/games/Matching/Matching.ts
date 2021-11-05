@@ -1,13 +1,13 @@
 import { APIMessage } from 'discord-api-types';
 import {
-  CommandInteraction, Message, MessageEmbedOptions,
+  Message, MessageEmbedOptions,
 } from 'discord.js';
 import i18n from 'i18next';
-import { Game, ToasterBot } from '../../structures';
+import { Game, GameConfig } from '../../structures';
 
 class Matching extends Game {
-  constructor(client: ToasterBot, interaction: CommandInteraction) {
-    super(client, interaction);
+  constructor(config : GameConfig) {
+    super(config, { timeLimit: 60 * 1000 });
   }
 
   protected async play() : Promise<void | Message | APIMessage> {
