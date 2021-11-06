@@ -2,9 +2,8 @@ import * as fs from 'fs';
 import { Collection } from 'discord.js';
 import i18n from 'i18next';
 import * as _ from 'lodash';
-import { Command, CommandInfo, ToasterBot } from '..';
+import { Command, CommandInfo, GroupCommand, ToasterBot } from '..';
 import { CooldownHandler } from '.';
-import GroupCommand from './GroupCommand';
 
 class CommandHandler {
   public commands : Collection<string, Command | GroupCommand> = new Collection();

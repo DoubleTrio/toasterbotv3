@@ -44,7 +44,7 @@ class Hangman extends Game {
       return;
     }
     while (!this.terminal()) {
-      this.renderEmbed();
+      await this.renderEmbed();
       await this.awaitUserLetter();
       if (this.hasEnded) {
         return;
@@ -67,7 +67,7 @@ class Hangman extends Game {
 
     if (min && max && min > max) {
       this.hasEnded = true;
-      this.interaction.followUp('hangman.unboundLengthWarning');
+      this.interaction.editReply('hangman.unboundLengthWarning');
       return;
     }
 
@@ -141,7 +141,7 @@ class Hangman extends Game {
     if (this.interaction.replied) {
       return this.interaction.editReply({ embeds: [data] });
     }
-    return this.interaction.followUp({ embeds: [data] });
+    return this.interaction.editReply({ embeds: [data] });
   }
 
   private async awaitUserLetter() : Promise<void> {
@@ -197,12 +197,12 @@ class Hangman extends Game {
 
       collector.on('end', () => {
         if (!flag) {
+          resolve();
           this.hasEnded = true;
           this.embedColor = this.client.colors.warning;
           this.renderEmbed(this.inactivityMessage);
         }
       });
-      resolve();
     });
   }
 

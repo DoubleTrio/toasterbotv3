@@ -11,8 +11,7 @@ import {
 } from 'discord.js';
 import i18n from 'i18next';
 import * as _ from 'lodash';
-import { Command, CommandInfo, ToasterBot } from '../../structures';
-import GroupCommand from '../../structures/handlers/GroupCommand';
+import { Command, CommandInfo, ToasterBot, GroupCommand } from '../../structures';
 import { PaginatedEmbed } from '../../utils';
 
 class HelpCommand extends Command {

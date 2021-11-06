@@ -1,6 +1,7 @@
 /node_modules
 config.json
 emojis.json
+kanji-jouyou.json
 *.js
 *.js.map
 .env

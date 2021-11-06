@@ -5,7 +5,7 @@ import {
   ApplicationCommandChoicesData,
   ApplicationCommandNonOptionsData,
 } from 'discord.js';
-import { Command } from '..';
+import { Command } from '.';
 
 class GroupCommand extends Command {
   public commands : Collection<string, Command> = new Collection();

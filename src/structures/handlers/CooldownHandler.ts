@@ -1,7 +1,6 @@
 import { Collection, User } from 'discord.js';
-import { Command } from '..';
+import { Command, GroupCommand } from '..';
 import { SubCommand } from '../../utils';
-import GroupCommand from './GroupCommand';
 
 interface CooldownData {
   command: Command | SubCommand | GroupCommand;

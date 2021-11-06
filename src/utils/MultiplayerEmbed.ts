@@ -6,12 +6,11 @@ import {
   CommandInteraction,
   Collection,
   GuildMember,
-  Message,
   User,
 } from 'discord.js';
 import i18n from 'i18next';
+import { SubCommand, SubCommandHandler } from '../structures/handlers';
 import { ExtendedUser, ToasterBot } from '../structures';
-import { CooldownHandler } from '../structures/handlers';
 
 interface MultiplayerEmbedConfig {
   title?: string;
@@ -19,15 +18,6 @@ interface MultiplayerEmbedConfig {
   min: number;
   max: number;
   name: string;
-}
-
-interface SubCommand {
-  cooldown : number;
-  name : string;
-  aliases?: string[];
-  execute : (message : Message, arg: unknown[]) => void;
-  description: string;
-  args: string
 }
 
 const MULTIPLAYER_EMBED_BUTTONS = {
@@ -45,10 +35,6 @@ class MultiplayerEmbed {
   readonly client : ToasterBot;
 
   public players: Collection<string, ExtendedUser> = new Collection();
-
-  private cooldownHandler = new CooldownHandler();
-
-  private commands = new Collection<string, SubCommand>();
 
   private embedOptions: MessageEmbedOptions;
 
@@ -69,6 +55,8 @@ class MultiplayerEmbed {
   private min : number;
 
   private name : string;
+
+  private subCommandHandler : SubCommandHandler;
 
   private timeLimit: number;
 
@@ -132,7 +120,7 @@ class MultiplayerEmbed {
           name: i18n.t('game.multiplayerEmbed.hostCommands', {
             prefix: this.client.prefix,
           }),
-          value: this.commands.map((cmd) => {
+          value: this.subCommandHandler.commands.map((cmd) => {
             const aliases = cmd.aliases.map((a) => `\`${a}\``).join(' ');
             const aliasesText = i18n.t('game.multiplayerEmbed.aliases', {
               aliasesText: aliases,
@@ -168,7 +156,7 @@ class MultiplayerEmbed {
     const commandList : SubCommand[] = [
       {
         name: 'invite',
-        cooldown: 10000,
+        cooldown: 5 * 1000,
         aliases: ['inv', 'add'],
         description: i18n.t('game.multiplayerEmbed.commands.invite.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
@@ -191,7 +179,7 @@ class MultiplayerEmbed {
       },
       {
         name: 'kick',
-        cooldown: 10000,
+        cooldown: 5 * 1000,
         aliases: ['k', 'remove', 'blacklist'],
         description: i18n.t('game.multiplayerEmbed.commands.kick.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
@@ -208,7 +196,7 @@ class MultiplayerEmbed {
       },
       {
         name: 'unkick',
-        cooldown: 10000,
+        cooldown: 5 * 1000,
         aliases: ['uk', 'whitelist'],
         description: i18n.t('game.multiplayerEmbed.commands.unkick.description'),
         args: i18n.t('game.multiplayerEmbed.commands.userArg'),
@@ -225,38 +213,13 @@ class MultiplayerEmbed {
       },
     ];
 
-    const commands = new Collection<string, SubCommand>();
 
-    commandList.forEach((command) => {
-      commands.set(command.name, command);
-    });
-
-    this.commands = commands;
-  }
-
-  private onMessage(message : Message) {
-    const content = message.content.trim();
-    const { prefix } = this.client;
-    if (!content.startsWith(prefix)) return;
-
-    const commandArgs = content.slice(prefix.length).trim().split(/ +/);
-    const commandName: string = commandArgs.shift();
-
-    if (!commandName) return;
-
-    const command = this.commands.get(commandName)
-      || this.commands.find((cmd : SubCommand) => cmd.aliases.includes(commandName));
-    if (command) {
-      const cooldownData = this.cooldownHandler.getCooldownData(command, message.member.user);
-      if (cooldownData) {
-        this.renderEmbed(i18n.t('commandOnCooldown', {
-          timeLeft: cooldownData.timeLeft.toFixed(1),
-          command,
-        }));
-        return;
-      }
-      command.execute(message, commandArgs);
-    }
+    this.subCommandHandler = new SubCommandHandler({
+      commands: commandList,
+      onCooldown: () => this.renderEmbed(),
+      prefix: this.client.prefix,
+      filter: (message) => message.member.id === this.interaction.user.id,
+    })
   }
 
   public async awaitResponse() : Promise<boolean> {
@@ -276,9 +239,9 @@ class MultiplayerEmbed {
     ) && !btnInteraction.user.bot
       && btnInteraction.message.id === this.messageId;
 
-    const messageFilter = (message : Message) => message.member.id === this.interaction.user.id;
-
     return new Promise((resolve) => {
+      this.subCommandHandler.init(this.interaction);
+      
       const buttonCollector = this.interaction.channel.createMessageComponentCollector(
         {
           filter: buttonFilter,
@@ -286,22 +249,11 @@ class MultiplayerEmbed {
         },
       );
 
-      const messageCollector = this.interaction.channel.createMessageCollector(
-        {
-          filter: messageFilter,
-          time: this.timeLimit,
-        },
-      );
-
       const stop = (outcome : boolean) => {
         resolve(outcome);
         buttonCollector.stop();
-        messageCollector.stop();
+        this.subCommandHandler.stopCollector();
       };
-
-      messageCollector.on('collect', (message : Message) => {
-        this.onMessage(message);
-      });
 
       buttonCollector.on('collect', (btnInteraction: ButtonInteraction) => {
         btnInteraction.deferUpdate();

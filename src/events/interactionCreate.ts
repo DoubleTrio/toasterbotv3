@@ -3,8 +3,7 @@ import {
   ClientEvents, CommandInteraction, Guild, Message, Permissions, TextChannel,
 } from 'discord.js';
 import i18n from 'i18next';
-import { ToasterBot, ToasterBotEvent } from '../structures';
-import GroupCommand from '../structures/handlers/GroupCommand';
+import { ToasterBot, ToasterBotEvent, GroupCommand } from '../structures';
 
 class InteractionCreateEvent extends ToasterBotEvent {
   constructor() {

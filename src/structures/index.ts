@@ -13,5 +13,11 @@ export {
   CardColor,
 } from './game';
 export { Player, PlayerConfig } from './Player';
-export { CommandHandler, EventHandler, InternalizationHandler } from './handlers';
+export { 
+  CommandHandler, 
+  EventHandler, 
+  CooldownHandler, 
+  InternalizationHandler, 
+} from './handlers';
+export { default as GroupCommand } from './GroupCommand';
 export { default as ToasterBot } from './ToasterBot';

@@ -1,6 +1,11 @@
 import { stripIndent } from 'common-tags';
 
 export default {
+  all: {
+    name: 'All',
+    description: 'Displays all the JLTP kanji',
+    extendedDescription: 'Returns all 2,000+ kanjis taught in grade school in the form of the kanji, first on-yomi reading, grade, and meanings',
+  },
   blackjack: {
     name: 'Blackjack',
     description: 'Cure your gambling addiction in a classic game of blackjack',
@@ -23,7 +28,7 @@ export default {
       -The game ends once all rounds are finished or when the player can no longer bet
 
       **Other**
-      -The dealer always stays at 16
+      -The dealer always stays at 16 (can be configured)
     `,
     betTooLow: 'Your bet is too **low**, try again **(>= {{min}})**',
     betTooHigh: 'Your bet is too **high**, try again **(<= {{max}})**',
@@ -121,7 +126,7 @@ export default {
     alreadyGuessedLetterMessage: 'You have already guessed this letter, try again',
     gameOverMessage: 'Game over! The word was {{word}}',
     lettersGuessed: 'Letters Guessed',
-    lives: 'Lives: {{lives}}',
+    lives: 'Lives: **{{lives}}**',
     unboundLengthWarning: 'The max word length cannot be greater than minimum word length',
     winMessage: 'You win! The word was {{word}}',
   },
@@ -268,6 +273,11 @@ export default {
     reminderText: 'Reminder that the word must be 3 letters or more. Yellow tiles are worth 0 points but can replace any letters',
     winSoloMessage: 'Congrats, you earned {{score}} points!',
     winMultiplayerMessage: '{{winners}} won with a total of **{{score}}** points',
+  },
+  search: {
+    name: 'Search',
+    description: 'Search for more information about a kanji',
+    extendedDescription: 'Displays the kanji, total strokes, the grade the kanji is learned, the JPLT level, meanings, on-yomi and kun-yomi, and examples',
   },
   trivia: {
     name: 'Trivia',

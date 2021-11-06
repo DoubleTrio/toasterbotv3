@@ -12,7 +12,7 @@ class ReadyEvent extends ToasterBotEvent {
   execute(client: ToasterBot) : Awaited<void> {
     client.commandHandler.commands.forEach(async (command) => {
       if (command.enabled) {
-        await client.createGuildCommand(command, process.env.TESTING_SERVER_ID);
+        // await client.createGuildCommand(command, process.env.TESTING_SERVER_ID); 
       }
     });
     client.user.setActivity({ type: 'PLAYING', name: 'Being refactored...' });

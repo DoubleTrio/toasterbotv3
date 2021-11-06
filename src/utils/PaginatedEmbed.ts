@@ -13,6 +13,7 @@ import {
   Message,
 } from 'discord.js';
 import i18n from 'i18next';
+import { SubCommand, SubCommandHandler } from '../structures/handlers';
 
 interface PaginatedEmbedOptions<T> {
   items: T[],
@@ -58,6 +59,8 @@ class PaginatedEmbed<T> {
 
   private message : Message;
 
+  private subCommandHandler : SubCommandHandler;
+
   constructor(interaction: CommandInteraction, options: PaginatedEmbedOptions<T>) {
     this.interaction = interaction;
     this.items = options.items.map((item, index) => options.transform(item, index));
@@ -75,11 +78,45 @@ class PaginatedEmbed<T> {
     };
   }
 
+  private initCommands() {
+    const commands : SubCommand[] = [
+      {
+        name: 'goto',
+        description: 'Goto that page',
+        execute: (message, args) => {
+          if (!args.length) return;
+          const arg = args[0] as string;
+          console.log(arg);
+          const num = parseInt(arg);
+          this.currentPage = num;
+          this.interaction.editReply({
+            embeds: [this.paginatedEmbed(this.items)],
+            components: [this.createActionButtonRow(), ...this.components],
+          });
+        },
+        aliases: ['page'],
+        cooldown: 2 * 1000,
+        args: 'Number',
+      }
+    ]
+
+    this.subCommandHandler = new SubCommandHandler(
+      {
+        commands,
+        onCooldown: () => { 'a' },
+        prefix: 'tb.',
+        filter: (message) => message.member.id === this.interaction.user.id,
+      }
+    )
+  }
   public async create() : Promise<void> {
     this.message = await this.interaction.fetchReply() as Message;
     this.count = this.items.length;
     this.totalPages = Math.ceil(this.count / this.perPage);
+    this.initCommands();
+
     return new Promise((resolve) => {
+      this.subCommandHandler.init(this.interaction);
       this.interaction.editReply({
         embeds: [this.paginatedEmbed(this.items)],
         components: [this.createActionButtonRow(), ...this.components],
@@ -102,6 +139,7 @@ class PaginatedEmbed<T> {
       });
 
       this.collector.on('end', async () => {
+        this.subCommandHandler.stopCollector();
         this.message.delete();
         resolve();
       });
@@ -165,7 +203,7 @@ class PaginatedEmbed<T> {
       ...this.embedData,
       footer: this.footer(),
       title: this.embedData.title ? `${this.embedData.title} | ${pageText}` : pageText,
-      fields: [...this.embedData.fields, ...data.slice(start, end)],
+      fields: [...this.embedData?.fields || [], ...data.slice(start, end)],
     };
     return embedData;
   }
